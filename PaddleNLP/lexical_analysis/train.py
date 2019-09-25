@@ -15,12 +15,13 @@ import paddle.fluid as fluid
 import reader
 import utils
 import creator
-from  eval import test_process
+from eval import test_process
 sys.path.append('../models/')
 from model_check import check_cuda
 
 # the function to train model
 def do_train(args):
+    best_score=-999
     train_program = fluid.default_main_program()
     startup_program = fluid.default_startup_program()
 
@@ -124,7 +125,11 @@ def do_train(args):
                     step, avg_cost, precision, recall, f1_score, end_time - start_time))
 
             if step % args.validation_steps == 0:
-                test_process(exe, test_program, test_reader, train_ret)
+                test_f1=test_process(exe, test_program, test_reader, train_ret)
+                if test_f1>best_score:
+                    best_score=test_f1
+                    save_path = os.path.join(args.model_save_dir, "best_mode")
+                    fluid.io.save_persistables(exe, save_path, train_program)
 
                 ce_time += end_time - start_time
                 ce_info.append([ce_time, avg_cost, precision, recall, f1_score])

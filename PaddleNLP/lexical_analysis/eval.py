@@ -93,6 +93,7 @@ def test_process(exe, program, reader, test_ret):
     end_time = time.time()
     print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s"
           % (precision, recall, f1, end_time - start_time))
+    return eval("%.5f"%f1)
 
 if __name__ == '__main__':
     args = parser.parse_args()

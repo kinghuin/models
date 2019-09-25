@@ -7,13 +7,13 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3     #   which GPU to use
 function run_train() {
     echo "training"
     python train.py \
-        --train_data ./data/train.tsv \
-        --test_data ./data/test.tsv \
+        --train_data ./data/data/train.tsv \
+        --test_data ./data/data/test.tsv \
         --model_save_dir ./models \
-        --validation_steps 2 \
-        --save_steps 10 \
-        --print_steps 1 \
-        --batch_size 300 \
+        --validation_steps 2000 \
+        --save_steps 10000 \
+        --print_steps 1000 \
+        --batch_size 400 \
         --epoch 10 \
         --traindata_shuffle_buffer 20000 \
         --word_emb_dim 128 \
@@ -26,7 +26,7 @@ function run_train() {
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic \
         --enable_ce false \
-        --use_cuda false \
+        --use_cuda true \
         --cpu_num 1
 }
 
@@ -135,4 +135,6 @@ function main() {
     esac
 }
 
+date
 main "$@"
+date
