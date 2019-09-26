@@ -24,6 +24,7 @@ def do_train(args):
     best_score=-999
     train_program = fluid.default_main_program()
     startup_program = fluid.default_startup_program()
+    random.seed(0)
 
     dataset = reader.Dataset(args)
     with fluid.program_guard(train_program, startup_program):
