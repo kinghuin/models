@@ -9,7 +9,7 @@ function run_train() {
     python train.py \
         --train_data ./data/data/train.tsv \
         --test_data ./data/data/test.tsv \
-        --model_save_dir ./models \
+        --model_save_dir ./padding_models \
         --validation_steps 2000 \
         --save_steps 10000 \
         --print_steps 1000 \

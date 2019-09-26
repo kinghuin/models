@@ -19,16 +19,17 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     """create lac model"""
 
     # model's input data
-    words = fluid.layers.data(name='words', shape=[-1, 1], dtype='int64',lod_level=1)
-    targets = fluid.layers.data(name='targets', shape=[-1, 1], dtype='int64', lod_level= 1)
+    words = fluid.layers.data(name='words', shape=[-1,64, 1], dtype='int64',lod_level=0)
+    targets = fluid.layers.data(name='targets', shape=[-1, 64, 1], dtype='int64', lod_level= 0)
+    length = fluid.layers.data(name='targets', shape=[-1, 1], dtype='int64', lod_level=0)
 
     # for inference process
     if mode=='infer':
-        crf_decode = nets.lex_net(words, args, vocab_size, num_labels, for_infer=True, target=None)
+        crf_decode = nets.lex_net(words, length, args, vocab_size, num_labels, for_infer=True, target=None)
         return { "feed_list":[words],"words":words, "crf_decode":crf_decode,}
 
     # for test or train process
-    avg_cost, crf_decode = nets.lex_net(words, args, vocab_size, num_labels, for_infer=False, target=targets)
+    avg_cost, crf_decode = nets.lex_net(words, length, args, vocab_size, num_labels, for_infer=False, target=targets)
 
     (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
      num_correct_chunks) = fluid.layers.chunk_eval(
@@ -43,6 +44,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
         "feed_list":[words, targets],
         "words": words,
         "targets": targets,
+        "length": length,
         "avg_cost":avg_cost,
         "crf_decode": crf_decode,
         "precision" : precision,

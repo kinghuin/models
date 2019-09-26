@@ -38,7 +38,6 @@ def do_train(args):
             optimizer = fluid.optimizer.Adam(learning_rate=args.base_learning_rate)
             optimizer.minimize(train_ret["avg_cost"])
 
-
     # init executor
     if args.use_cuda:
         place = fluid.CUDAPlace(int(os.getenv('FLAGS_selected_gpus', '0')))
@@ -96,6 +95,7 @@ def do_train(args):
 
     ce_info = []
     step = 0
+    print_start_time = time.time()
     for epoch_id in range(args.epoch):
         ce_time = 0
         for data in train_reader():
@@ -110,28 +110,32 @@ def do_train(args):
             else:
                 fetch_list = []
 
-            start_time = time.time()
+
             outputs = exe.run(
                 compiled_prog,
                 fetch_list=fetch_list,
                 feed=data[0],
             )
 
-            end_time = time.time()
             if step % args.print_steps == 0:
+                print_end_time = time.time()
                 avg_cost, precision, recall, f1_score = [np.mean(x) for x in outputs]
 
                 print("[train] step = %d, loss = %.5f, P: %.5f, R: %.5f, F1: %.5f, elapsed time %.5f" % (
-                    step, avg_cost, precision, recall, f1_score, end_time - start_time))
+                    step, avg_cost, precision, recall, f1_score, print_end_time - print_start_time))
+                print_start_time = time.time()
 
             if step % args.validation_steps == 0:
+                valid_end_time=time.time()
                 test_f1=test_process(exe, test_program, test_reader, train_ret)
+                valid_start_time=time.time()
+
                 if test_f1>best_score:
                     best_score=test_f1
                     save_path = os.path.join(args.model_save_dir, "best_mode")
                     fluid.io.save_persistables(exe, save_path, train_program)
 
-                ce_time += end_time - start_time
+                ce_time += valid_end_time - valid_start_time
                 ce_info.append([ce_time, avg_cost, precision, recall, f1_score])
 
             # save checkpoints

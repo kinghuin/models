@@ -8,7 +8,7 @@ import math
 import paddle.fluid as fluid
 from paddle.fluid.initializer import NormalInitializer
 
-def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
+def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target=None):
     """
     define the lexical analysis network structure
     word: stores the input of the model
@@ -33,11 +33,14 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
         pre_gru = fluid.layers.fc(
             input=input_feature,
             size=grnn_hidden_dim * 3,
+            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+
+        # 9.25 16:28 NOW HERE # TODO:MODIFY
         gru = fluid.layers.dynamic_gru(
             input=pre_gru,
             size=grnn_hidden_dim,
@@ -50,11 +53,14 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
         pre_gru_r = fluid.layers.fc(
             input=input_feature,
             size=grnn_hidden_dim * 3,
+            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+
+        # TODO:MODIFY
         gru_r = fluid.layers.dynamic_gru(
             input=pre_gru_r,
             size=grnn_hidden_dim,
@@ -65,7 +71,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
-        bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=1)
+        bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=2)
         return bi_merge
 
     def _net_conf(word, target=None):
@@ -91,12 +97,14 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
         emission = fluid.layers.fc(
             size=num_labels,
             input=bigru_output,
+            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
+        #TODO:MODIFY
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
                 input=emission,
