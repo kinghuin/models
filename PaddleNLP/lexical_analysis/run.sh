@@ -7,9 +7,9 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3     #   which GPU to use
 function run_train() {
     echo "training"
     python train.py \
-        --train_data ./data/data/train.tsv \
-        --test_data ./data/data/test.tsv \
-        --model_save_dir ./models \
+        --train_data ./data/train.tsv \
+        --test_data ./data/test.tsv \
+        --model_save_dir ./models_latest \
         --validation_steps 2000 \
         --save_steps 10000 \
         --print_steps 1000 \
