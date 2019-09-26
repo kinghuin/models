@@ -97,6 +97,8 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
+        fluid.layers.Print(emission,message="before linear_chain_crf")
+
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
                 input=emission,
@@ -104,9 +106,15 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 param_attr=fluid.ParamAttr(
                     name='crfw',
                     learning_rate=crf_lr))
+            fluid.layers.Print(crf_cost, message="after linear_chain_crf")
+
             avg_cost = fluid.layers.mean(x=crf_cost)
+
+            fluid.layers.Print(avg_cost, message="before crf_decode")
             crf_decode = fluid.layers.crf_decoding(
                 input=emission, param_attr=fluid.ParamAttr(name='crfw'))
+            fluid.layers.Print(avg_cost, message="after crf_decode")
+
             return avg_cost,crf_decode
 
         else:
