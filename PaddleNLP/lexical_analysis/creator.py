@@ -55,6 +55,15 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     }
     return  ret
 
+def create_batch_reader(args, file_name, feed_list, place, mode='lac', reader=None, iterable=True, return_reader=False, for_test=False):
+    if reader == None:
+        reader = Dataset(args)
+    batch_reader=paddle.batch(reader.file_reader(file_name),
+                    batch_size=args.batch_size)
+
+    return batch_reader
+
+
 
 
 def create_pyreader(args, file_name, feed_list, place, mode='lac', reader=None, iterable=True, return_reader=False, for_test=False):

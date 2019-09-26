@@ -51,7 +51,7 @@ def do_train(args):
         os.environ['CPU_NUM'] = str(dev_count)
         place = fluid.CPUPlace()
 
-    train_reader = creator.create_pyreader(args, file_name=args.train_data,
+    train_reader = creator.create_batch_reader(args, file_name=args.train_data,
                                        feed_list=train_ret['feed_list'],
                                        place=place,
                                        mode='lac',
@@ -65,6 +65,7 @@ def do_train(args):
                                        reader=dataset,
                                        iterable=True,
                                        for_test=True)
+    feeder = fluid.DataFeeder(place=place, feed_list=train_ret['feed_list'])
 
     exe = fluid.Executor(place)
     exe.run(startup_program)
@@ -114,7 +115,7 @@ def do_train(args):
             outputs = exe.run(
                 compiled_prog,
                 fetch_list=fetch_list,
-                feed=data[0],
+                feed=feeder.feed(data),
             )
 
             end_time = time.time()
