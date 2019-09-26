@@ -24,12 +24,12 @@ def do_train(args):
     best_score=-999
     train_program = fluid.default_main_program()
     startup_program = fluid.default_startup_program()
-    random.seed(0)
+    random.seed(1)
 
     dataset = reader.Dataset(args)
     with fluid.program_guard(train_program, startup_program):
-        train_program.random_seed = args.random_seed
-        startup_program.random_seed = args.random_seed
+        train_program.random_seed = 1
+        startup_program.random_seed = 1
 
         with fluid.unique_name.guard():
             train_ret = creator.create_model(
