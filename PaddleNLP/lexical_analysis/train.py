@@ -101,7 +101,6 @@ def do_train(args):
     for epoch_id in range(args.epoch):
         ce_time = 0
         for data in train_reader():
-            print(data)
             # this is for minimizing the fetching op, saving the training speed.
             if step % args.print_steps == 0:
                 fetch_list = [
