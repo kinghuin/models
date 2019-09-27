@@ -105,8 +105,9 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        # crf_cost = fluid.layers.Print(emission, message="crf_cost", summarize=10)
 
-        # fluid.layers.Print(emission,message="emission",summarize=10)
+        emission=fluid.layers.Print(emission,message="emission",summarize=10)
 
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
