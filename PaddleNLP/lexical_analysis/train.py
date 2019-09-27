@@ -32,7 +32,7 @@ def do_train(args):
         startup_program.random_seed = 1
 
         with fluid.unique_name.guard():
-            train_ret = creator.create_model(
+            train_ret, avg_cost, crf_decode, crf_cost, emission, bigru_output, word_embedding = creator.create_model(
                 args, dataset.vocab_size, dataset.num_labels, mode='train')
             test_program = train_program.clone(for_test=True)
 
@@ -107,7 +107,8 @@ def do_train(args):
                     train_ret["avg_cost"],
                     train_ret["precision"],
                     train_ret["recall"],
-                    train_ret["f1_score"]
+                    train_ret["f1_score"],
+                    avg_cost, crf_decode, crf_cost, emission, bigru_output, word_embedding
                 ]
             else:
                 fetch_list = []
@@ -118,6 +119,14 @@ def do_train(args):
                 fetch_list=fetch_list,
                 feed=feeder.feed(data),
             )
+            print("word_embedding:",word_embedding)
+            print("bigru_output:",bigru_output)
+            print("emission:", emission)
+            print("crf_cost:", crf_cost)
+            print("avg_cost", avg_cost)
+            print("crf_decode", crf_decode)
+            if step>=3:
+                exit()
 
             end_time = time.time()
             if step % args.print_steps == 0:

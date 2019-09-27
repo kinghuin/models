@@ -28,7 +28,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
         return { "feed_list":[words],"words":words, "crf_decode":crf_decode,}
 
     # for test or train process
-    avg_cost, crf_decode = nets.lex_net(words, args, vocab_size, num_labels, for_infer=False, target=targets)
+    avg_cost, crf_decode, crf_cost, emission, bigru_output, word_embedding = nets.lex_net(words, args, vocab_size, num_labels, for_infer=False, target=targets)
 
     (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
      num_correct_chunks) = fluid.layers.chunk_eval(
@@ -53,7 +53,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
         "num_label_chunks": num_label_chunks,
         "num_correct_chunks": num_correct_chunks
     }
-    return  ret
+    return  ret, avg_cost, crf_decode, crf_cost, emission, bigru_output, word_embedding
 
 def create_batch_reader(args, file_name, feed_list, place, mode='lac', reader=None, iterable=True, return_reader=False, for_test=False):
     if reader == None:

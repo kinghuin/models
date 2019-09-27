@@ -97,7 +97,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
-        # fluid.layers.Print(emission,message="before linear_chain_crf",summarize=10,first_n=2)
+        # fluid.layers.Print(emission,message="before linear_chain_crf",summarize=10, print_tensor_type=False, print_tensor_shape=False, print_tensor_lod=False, print_phase='both')
 
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
@@ -106,16 +106,16 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 param_attr=fluid.ParamAttr(
                     name='crfw',
                     learning_rate=crf_lr))
-            # fluid.layers.Print(crf_cost, message="after linear_chain_crf",summarize=10,first_n=2)
+            # fluid.layers.Print(crf_cost, message="after linear_chain_crf",summarize=10, print_tensor_type=False, print_tensor_shape=False, print_tensor_lod=False, print_phase='both')
 
             avg_cost = fluid.layers.mean(x=crf_cost)
 
-            fluid.layers.Print(avg_cost, message="before crf_decode")
+            # fluid.layers.Print(avg_cost, message="before crf_decode",summarize=10, print_tensor_type=False, print_tensor_shape=False, print_tensor_lod=False, print_phase='both')
             crf_decode = fluid.layers.crf_decoding(
                 input=emission, param_attr=fluid.ParamAttr(name='crfw'))
-            fluid.layers.Print(avg_cost, message="after crf_decode")
+            # fluid.layers.Print(avg_cost, message="after crf_decode",summarize=10, print_tensor_type=False, print_tensor_shape=False, print_tensor_lod=False, print_phase='both')
 
-            return avg_cost,crf_decode
+            return avg_cost,crf_decode, crf_cost, emission, bigru_output, word_embedding
 
         else:
             size = emission.shape[1]
