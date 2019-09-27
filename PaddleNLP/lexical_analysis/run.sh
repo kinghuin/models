@@ -12,7 +12,7 @@ function run_train() {
         --model_save_dir ./models_latest \
         --validation_steps 2000 \
         --save_steps 10000 \
-        --print_steps 1 \
+        --print_steps 100 \
         --batch_size 3 \
         --epoch 10 \
         --traindata_shuffle_buffer 20000 \
