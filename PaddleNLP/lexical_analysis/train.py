@@ -125,8 +125,8 @@ def do_train(args):
             # print("crf_cost:", crf_cost)
             # print("avg_cost", avg_cost)
             # print("crf_decode", crf_decode)
-            # if step>=3:
-            #     exit()
+            if step>=30:
+                exit()
 
             end_time = time.time()
             if step % args.print_steps == 0:
