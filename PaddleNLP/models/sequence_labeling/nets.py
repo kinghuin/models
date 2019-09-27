@@ -38,7 +38,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
-        fluid.layers.Print(pre_gru, message="pre_gru", summarize=10)
+        # fluid.layers.Print(pre_gru, message="pre_gru", summarize=10)
 
         gru = fluid.layers.dynamic_gru(
             input=pre_gru,
@@ -48,7 +48,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
-        fluid.layers.Print(gru, message="gru", summarize=10)
+        # fluid.layers.Print(gru, message="gru", summarize=10)
 
         pre_gru_r = fluid.layers.fc(
             input=input_feature,
@@ -58,7 +58,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
-        fluid.layers.Print(pre_gru_r, message="pre_gru_r", summarize=10)
+        # fluid.layers.Print(pre_gru_r, message="pre_gru_r", summarize=10)
 
         gru_r = fluid.layers.dynamic_gru(
             input=pre_gru_r,
@@ -69,10 +69,10 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
-        fluid.layers.Print(gru_r, message="gru_r", summarize=10)
+        # fluid.layers.Print(gru_r, message="gru_r", summarize=10)
 
         bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=1)
-        fluid.layers.Print(bi_merge, message="bi_merge", summarize=10)
+        # fluid.layers.Print(bi_merge, message="bi_merge", summarize=10)
         return bi_merge
 
     def _net_conf(word, target=None):
@@ -89,13 +89,13 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 name="word_emb",
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound)))
-        fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
+        # fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
 
         input_feature = word_embedding
         for i in range(bigru_num):
             bigru_output = _bigru_layer(input_feature)
             input_feature = bigru_output
-        fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
+        # fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
 
         emission = fluid.layers.fc(
             size=num_labels,
@@ -106,7 +106,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
-        fluid.layers.Print(emission,message="emission",summarize=10)
+        # fluid.layers.Print(emission,message="emission",summarize=10)
 
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
@@ -115,13 +115,13 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 param_attr=fluid.ParamAttr(
                     name='crfw',
                     learning_rate=crf_lr))
-            fluid.layers.Print(crf_cost, message="crf_cost",summarize=10)
+            crf_cost = fluid.layers.Print(crf_cost, message="crf_cost",summarize=10)
 
             avg_cost = fluid.layers.mean(x=crf_cost)
-            fluid.layers.Print(avg_cost, message="avg_cost",summarize=10)
+            # fluid.layers.Print(avg_cost, message="avg_cost",summarize=10)
             crf_decode = fluid.layers.crf_decoding(
                 input=emission, param_attr=fluid.ParamAttr(name='crfw'))
-            fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
+            # fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
 
             return avg_cost,crf_decode, crf_cost, emission, bigru_output, word_embedding
 
