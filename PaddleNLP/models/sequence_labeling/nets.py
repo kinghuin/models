@@ -119,9 +119,11 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
 
             avg_cost = fluid.layers.mean(x=crf_cost)
             # fluid.layers.Print(avg_cost, message="avg_cost",summarize=10)
+
             crf_decode = fluid.layers.crf_decoding(
                 input=emission, param_attr=fluid.ParamAttr(name='crfw'))
-            # fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
+
+            crf_decode=fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
 
             return avg_cost,crf_decode, crf_cost, emission, bigru_output, word_embedding
 
