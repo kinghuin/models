@@ -38,6 +38,8 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        fluid.layers.Print(pre_gru, message="pre_gru", summarize=10)
+
         gru = fluid.layers.dynamic_gru(
             input=pre_gru,
             size=grnn_hidden_dim,
@@ -46,6 +48,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        fluid.layers.Print(gru, message="gru", summarize=10)
 
         pre_gru_r = fluid.layers.fc(
             input=input_feature,
@@ -55,6 +58,8 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        fluid.layers.Print(pre_gru_r, message="pre_gru_r", summarize=10)
+
         gru_r = fluid.layers.dynamic_gru(
             input=pre_gru_r,
             size=grnn_hidden_dim,
@@ -64,8 +69,10 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        fluid.layers.Print(gru_r, message="gru_r", summarize=10)
 
         bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=1)
+        fluid.layers.Print(bi_merge, message="bi_merge", summarize=10)
         return bi_merge
 
     def _net_conf(word, target=None):
