@@ -89,13 +89,13 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 name="word_emb",
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound)))
-        # fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
+        word_embedding=fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
 
         input_feature = word_embedding
         for i in range(bigru_num):
             bigru_output = _bigru_layer(input_feature)
             input_feature = bigru_output
-        # fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
+        bigru_output=fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
 
         emission = fluid.layers.fc(
             size=num_labels,
@@ -116,7 +116,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 param_attr=fluid.ParamAttr(
                     name='crfw',
                     learning_rate=crf_lr))
-            crf_cost = fluid.layers.Print(crf_cost, message="crf_cost",summarize=10)
+            # crf_cost = fluid.layers.Print(crf_cost, message="crf_cost",summarize=10)
 
             avg_cost = fluid.layers.mean(x=crf_cost)
             # fluid.layers.Print(avg_cost, message="avg_cost",summarize=10)
@@ -124,7 +124,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
             crf_decode = fluid.layers.crf_decoding(
                 input=emission, param_attr=fluid.ParamAttr(name='crfw'))
 
-            crf_decode=fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
+            # crf_decode=fluid.layers.Print(crf_decode, message="crf_decode",summarize=10)
 
             return avg_cost,crf_decode, crf_cost, emission, bigru_output, word_embedding
 
