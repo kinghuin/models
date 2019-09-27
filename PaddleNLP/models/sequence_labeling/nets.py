@@ -89,13 +89,13 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                 name="word_emb",
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound)))
-        word_embedding=fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
+        # word_embedding=fluid.layers.Print(word_embedding, message="word_embedding", summarize=10)
 
         input_feature = word_embedding
         for i in range(bigru_num):
             bigru_output = _bigru_layer(input_feature)
             input_feature = bigru_output
-        bigru_output=fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
+        # bigru_output=fluid.layers.Print(bigru_output, message="bigru_output", summarize=10)
 
         emission = fluid.layers.fc(
             size=num_labels,
@@ -107,7 +107,7 @@ def lex_net(word, args, vocab_size, num_labels, for_infer = True, target=None):
                     regularization_coeff=1e-4)))
         # crf_cost = fluid.layers.Print(emission, message="crf_cost", summarize=10)
 
-        emission=fluid.layers.Print(emission,message="emission",summarize=10)
+        # emission=fluid.layers.Print(emission,message="emission",summarize=10)
 
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(

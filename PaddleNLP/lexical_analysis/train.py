@@ -24,12 +24,12 @@ def do_train(args):
     best_score=-999
     train_program = fluid.default_main_program()
     startup_program = fluid.default_startup_program()
-    random.seed(1)
+    # random.seed(1)
 
     dataset = reader.Dataset(args)
     with fluid.program_guard(train_program, startup_program):
-        train_program.random_seed = 1
-        startup_program.random_seed = 1
+        train_program.random_seed = 0
+        startup_program.random_seed = 0
 
         with fluid.unique_name.guard():
             train_ret, avg_cost, crf_decode, crf_cost, emission, bigru_output, word_embedding = creator.create_model(
@@ -125,8 +125,8 @@ def do_train(args):
             # print("crf_cost:", crf_cost)
             # print("avg_cost", avg_cost)
             # print("crf_decode", crf_decode)
-            if step>=30:
-                exit()
+            # if step>=30:
+            #     exit()
 
             end_time = time.time()
             if step % args.print_steps == 0:
