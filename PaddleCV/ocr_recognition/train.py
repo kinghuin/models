@@ -117,9 +117,9 @@ def train(args):
         error_evaluator.reset(exe)
         for data in test_reader():
             exe.run(inference_program, feed=get_feeder_data(data, place))
-        _, test_seq_error = error_evaluator.eval(exe)
-        print("\nTime: %s; Iter[%d]; Test seq error: %s.\n" %
-              (time.time(), iter_num, str(test_seq_error[0])))
+        test_avg_distance, test_seq_error = error_evaluator.eval(exe)
+        print("\nTime: %s; Iter[%d]; Test avg distance: %s; Test seq error: %s.\n" %
+              (time.time(), iter_num, str(test_avg_distance[0]), str(test_seq_error[0])))
 
         #Note: The following logs are special for CE monitoring.
         #Other situations do not need to care about these logs.
@@ -137,6 +137,7 @@ def train(args):
     while not stop:
         total_loss = 0.0
         total_seq_error = 0.0
+	total_distance = 0.0
         batch_times = []
         # train a pass
         for data in train_reader():
@@ -154,13 +155,15 @@ def train(args):
             batch_times.append(batch_time)
             total_loss += results[0]
             total_seq_error += results[2]
+            total_distance += results[1]
 
             iter_num += 1
             # training log
             if iter_num % args.log_period == 0:
-                print("\nTime: %s; Iter[%d]; Avg loss: %.3f; Avg seq err: %.3f"
+                print("\nTime: %s; Iter[%d]; Avg loss: %.3f; Avg total distance: %.3f; Avg seq err: %.3f"
                       % (time.time(), iter_num,
                          total_loss / (args.log_period * args.batch_size),
+                         total_distance / (args.log_period * args.batch_size),
                          total_seq_error / (args.log_period * args.batch_size)))
                 print("kpis	train_cost	%f" % (total_loss / (args.log_period *
                                                             args.batch_size)))
