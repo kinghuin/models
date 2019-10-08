@@ -44,6 +44,8 @@ add_arg('skip_test',         bool,  False,      "Whether to skip test phase.")
 
 def train(args):
     """OCR training"""
+    best_dis=999
+    best_error=999
 
     if args.model == "crnn_ctc":
         train_net = ctc_train_net
@@ -113,17 +115,22 @@ def train(args):
             results = [result[0] for result in results]
         return results
 
-    def test(iter_num):
+    def test(iter_num,best_dis,best_error):
         error_evaluator.reset(exe)
         for data in test_reader():
             exe.run(inference_program, feed=get_feeder_data(data, place))
         test_avg_distance, test_seq_error = error_evaluator.eval(exe)
+        if test_avg_distance[0]<best_dis:
+            best_dis=test_avg_distance[0]
+        if test_seq_error[0]<best_error:
+            best_error=test_seq_error[0]
         print("\nTime: %s; Iter[%d]; Test avg distance: %s; Test seq error: %s.\n" %
               (time.time(), iter_num, str(test_avg_distance[0]), str(test_seq_error[0])))
-
+        print("best dis: %s, best error: %s"%(str(test_avg_distance[0]), str(test_seq_error[0])))
         #Note: The following logs are special for CE monitoring.
         #Other situations do not need to care about these logs.
         print("kpis	test_acc	%f" % (1 - test_seq_error[0]))
+        return best_dis,best_error
 
     def save_model(args, exe, iter_num):
         filename = "model_%05d" % iter_num
@@ -137,7 +144,7 @@ def train(args):
     while not stop:
         total_loss = 0.0
         total_seq_error = 0.0
-	total_distance = 0.0
+        total_distance = 0.0
         batch_times = []
         # train a pass
         for data in train_reader():
@@ -176,9 +183,9 @@ def train(args):
             if not args.skip_test and iter_num % args.eval_period == 0:
                 if model_average:
                     with model_average.apply(exe):
-                        test(iter_num)
+                        best_dis,best_error=test(iter_num,best_dis,best_error)
                 else:
-                    test(iter_num)
+                    best_dis,best_error=test(iter_num,best_dis,best_error)
 
             # save model
             if iter_num % args.save_model_period == 0:
