@@ -36,15 +36,15 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
         input=crf_decode,
         label=targets,
         chunk_scheme="IOB",
-        num_chunk_types=int(math.ceil((num_labels - 1) / 2.0)))
+        num_chunk_types=int(math.ceil((num_labels - 1) / 2.0)),
+        seq_length=length)
     chunk_evaluator = fluid.metrics.ChunkEvaluator()
     chunk_evaluator.reset()
 
     ret = {
-        "feed_list":[words, targets],
+        "feed_list":[words, targets,length],
         "words": words,
         "targets": targets,
-        "length": length,
         "avg_cost":avg_cost,
         "crf_decode": crf_decode,
         "precision" : precision,
@@ -94,7 +94,7 @@ def create_pyreader(args, file_name, feed_list, place, mode='lac', reader=None, 
     elif mode == 'ernie':
         # create ernie pyreader
         if reader==None:
-            reader = task_reader.SequenceLabelReader(
+            reader = task_reader.SequenceLabelReader( #TODO: MODIFY
                 vocab_path=args.vocab_path,
                 label_map_config=args.label_map_config,
                 max_seq_len=args.max_seq_len,

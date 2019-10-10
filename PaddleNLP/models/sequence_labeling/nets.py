@@ -8,6 +8,7 @@ import math
 import paddle.fluid as fluid
 from paddle.fluid.initializer import NormalInitializer
 
+
 def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target=None):
     """
     define the lexical analysis network structure
@@ -33,43 +34,32 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
         pre_gru = fluid.layers.fc(
             input=input_feature,
             size=grnn_hidden_dim * 3,
-            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                    regularization_coeff=1e-4)),
+            num_flatten_dims=2)
 
-        # 9.25 16:28 NOW HERE # TODO:MODIFY
-        gru = fluid.layers.dynamic_gru(
-            input=pre_gru,
-            size=grnn_hidden_dim,
-            param_attr=fluid.ParamAttr(
+        # TODO:MODIFY  这里的GRU公式和以前的不一样
+        gru_cell = fluid.layers.rnn.GRUCell(hidden_size=grnn_hidden_dim,param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
+        gru = fluid.layers.rnn.rnn(cell=gru_cell, inputs=pre_gru, sequence_length=length)
 
         pre_gru_r = fluid.layers.fc(
             input=input_feature,
             size=grnn_hidden_dim * 3,
-            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                    regularization_coeff=1e-4)),
+            num_flatten_dims=2)
 
-        # TODO:MODIFY
-        gru_r = fluid.layers.dynamic_gru(
-            input=pre_gru_r,
-            size=grnn_hidden_dim,
-            is_reverse=True,
-            param_attr=fluid.ParamAttr(
-                initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
-                regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+        gru_r = fluid.layers.rnn.rnn(cell=gru_cell, inputs=pre_gru_r, sequence_length=length,is_reverse=True)
 
         bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=2)
         return bi_merge
@@ -97,24 +87,25 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
         emission = fluid.layers.fc(
             size=num_labels,
             input=bigru_output,
-            num_flatten_dims=2,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                    regularization_coeff=1e-4)),
+            num_flatten_dims=2,)
 
-        #TODO:MODIFY
         if not for_infer:
             crf_cost = fluid.layers.linear_chain_crf(
                 input=emission,
                 label=target,
                 param_attr=fluid.ParamAttr(
                     name='crfw',
-                    learning_rate=crf_lr))
+                    learning_rate=crf_lr),
+                length=length
+            )
             avg_cost = fluid.layers.mean(x=crf_cost)
             crf_decode = fluid.layers.crf_decoding(
-                input=emission, param_attr=fluid.ParamAttr(name='crfw'))
+                input=emission, param_attr=fluid.ParamAttr(name='crfw'),length=length)
             return avg_cost,crf_decode
 
         else:
@@ -123,7 +114,7 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                                           dtype=emission.dtype,
                                           name='crfw')
             crf_decode = fluid.layers.crf_decoding(
-                input=emission, param_attr=fluid.ParamAttr(name='crfw'))
+                input=emission, param_attr=fluid.ParamAttr(name='crfw'),length=length)
 
         return crf_decode
 
