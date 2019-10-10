@@ -21,7 +21,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     # model's input data
     words = fluid.layers.data(name='words', shape=[-1,64, 1], dtype='int64',lod_level=0)
     targets = fluid.layers.data(name='targets', shape=[-1, 64,1], dtype='int64', lod_level= 0)
-    length = fluid.layers.data(name='length', shape=[-1,1], dtype='int64', lod_level=0)
+    length = fluid.layers.data(name='length', shape=[-1], dtype='int64', lod_level=0)
     # length = fluid.layers.squeeze(length,axes=[-1])
     squeeze_targets=fluid.layers.squeeze(targets,axes=[-1])
 
