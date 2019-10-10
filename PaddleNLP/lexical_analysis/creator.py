@@ -28,7 +28,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     # for inference process
     if mode=='infer':
         crf_decode = nets.lex_net(words, length, args, vocab_size, num_labels, for_infer=True, target=None)
-        return { "feed_list":[words],"words":words, "crf_decode":crf_decode,}
+        return { "feed_list":[words, length],"words":words, "crf_decode":crf_decode,}
 
     # for test or train process
     avg_cost, crf_decode = nets.lex_net(words, length, args, vocab_size, num_labels, for_infer=False, target=targets)
