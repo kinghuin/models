@@ -47,8 +47,7 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                     low=-init_bound, high=init_bound),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
-        print(word)
-        print(length)
+
         gru = fluid.layers.rnn.rnn(cell=gru_cell, inputs=pre_gru, sequence_length=length)
 
         pre_gru_r = fluid.layers.fc(
