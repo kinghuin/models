@@ -41,7 +41,7 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                     regularization_coeff=1e-4)),
             num_flatten_dims=2)
 
-        # TODO:MODIFY  这里的GRU公式和以前的不一样
+        # TODO:MODIFY  WARNING: DIFFERENT FORMULA
         gru_cell = fluid.layers.rnn.GRUCell(hidden_size=grnn_hidden_dim,param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
