@@ -22,6 +22,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     words = fluid.layers.data(name='words', shape=[-1,64, 1], dtype='int64',lod_level=0)
     targets = fluid.layers.data(name='targets', shape=[-1, 64,1], dtype='int64', lod_level= 0)
     length = fluid.layers.data(name='length', shape=[-1], dtype='int64', lod_level=0)
+    squeeze_targets=fluid.layers.squeeze(targets)
 
     # for inference process
     if mode=='infer':
@@ -34,7 +35,7 @@ def create_model(args,  vocab_size, num_labels, mode = 'train'):
     (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
      num_correct_chunks) = fluid.layers.chunk_eval(
         input=crf_decode,
-        label=targets,
+        label=squeeze_targets,
         chunk_scheme="IOB",
         num_chunk_types=int(math.ceil((num_labels - 1) / 2.0)),
         seq_length=length)
