@@ -91,7 +91,10 @@ class Dataset(object):
                 for line in fread:
                     words= line.strip()
                     word_ids = self.word_to_ids(words)
-                    yield (word_ids[0:max_seq_len],)
+                    words_len = len(word_ids)
+                    # expand to max_seq_len
+                    word_ids += [0 for _ in range(max_seq_len-words_len)]
+                    yield (word_ids[0:max_seq_len],words_len)
             else:
                 headline = next(fread)
                 for line in fread:
@@ -99,9 +102,12 @@ class Dataset(object):
                     if len(words)<1:
                         continue
                     word_ids = self.word_to_ids(words.split("\002"))
+                    words_len = len(word_ids)
+                    word_ids += [0 for _ in range(max_seq_len - words_len)]
                     label_ids = self.label_to_ids(labels.split("\002"))
+                    label_ids += [0 for _ in range(max_seq_len-words_len)]
                     assert len(word_ids) == len(label_ids)
-                    yield word_ids[0:max_seq_len], label_ids[0:max_seq_len]
+                    yield word_ids[0:max_seq_len], label_ids[0:max_seq_len], words_len
             fread.close()
 
         return wrapper
