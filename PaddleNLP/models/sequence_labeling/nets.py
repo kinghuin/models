@@ -42,7 +42,6 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                     regularization_coeff=1e-4)),
             num_flatten_dims=2)
 
-        # TODO:MODIFY  WARNING: DIFFERENT FORMULA
         gru_cell = fluid.layers.rnn.GRUCell(hidden_size=grnn_hidden_dim,param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
                     low=-init_bound, high=init_bound),
@@ -60,7 +59,6 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)),
             num_flatten_dims=2)
-
         gru_r,_ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=pre_gru_r, sequence_length=length,is_reverse=True)
 
         bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=2)
