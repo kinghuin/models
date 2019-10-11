@@ -140,7 +140,7 @@ def create_ernie_model(args,
     pos_ids = fluid.layers.data(name='pos_ids', shape=[args.max_seq_len, 1], dtype='int64',lod_level=0)
     input_mask = fluid.layers.data(name='input_mask', shape=[args.max_seq_len, 1], dtype='int64',lod_level=0)
     padded_labels =fluid.layers.data(name='padded_labels', shape=[args.max_seq_len, 1], dtype='int64',lod_level=0)
-    seq_lens = fluid.layers.data(name='seq_lens', shape=[1], dtype='int64',lod_level=0)
+    seq_lens = fluid.layers.data(name='seq_lens', shape=[-1], dtype='int64',lod_level=0)
 
     ernie_inputs = {
         "src_ids": src_ids,

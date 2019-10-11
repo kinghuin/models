@@ -27,7 +27,7 @@ function run_train() {
         --base_learning_rate 2e-4 \
         --crf_learning_rate 0.2 \
         --init_bound 0.1 \
-        --print_steps 200 \
+        --print_steps 100 \
         --vocab_path "${ERNIE_PRETRAINED_MODEL_PATH}/vocab.txt" \
         --batch_size 64 \
         --random_seed 0 \
@@ -37,7 +37,7 @@ function run_train() {
         --test_data "${DATA_PATH}/test.tsv" \
         --label_map_config "./conf/label_map.json" \
         --do_lower_case true \
-        --use_cuda false \
+        --use_cuda true \
         --cpu_num 1
      date
 }

@@ -277,7 +277,7 @@ class SequenceLabelReader(BaseReader):
         return_list = [
             padded_token_ids, padded_text_type_ids, padded_position_ids,
             input_mask, padded_label_ids, batch_seq_lens
-        ]
+        ]  # Here are what reader will return
         return return_list
 
     def _reseg_token_label(self, tokens, labels, tokenizer):
