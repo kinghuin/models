@@ -190,7 +190,7 @@ def create_ernie_model(args,
             length=seq_lens)
         avg_cost = fluid.layers.mean(x=crf_cost)
         crf_decode = fluid.layers.crf_decoding(
-            input=emission, param_attr=fluid.ParamAttr(name='crfw'))
+            input=emission, param_attr=fluid.ParamAttr(name='crfw'),length=seq_lens)
 
 
         (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
