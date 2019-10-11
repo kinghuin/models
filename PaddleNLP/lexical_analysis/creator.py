@@ -199,7 +199,7 @@ def create_ernie_model(args,
              label=padded_labels,
              chunk_scheme="IOB",
              num_chunk_types=int(math.ceil((args.num_labels - 1) / 2.0)),
-                length=seq_lens)
+             seq_length=seq_lens)
         chunk_evaluator = fluid.metrics.ChunkEvaluator()
         chunk_evaluator.reset()
 
