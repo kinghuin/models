@@ -7,7 +7,7 @@ export FLAGS_fast_eager_deletion_mode=1
 # export NCCL_IB_GID_INDEX=3
 # export GLOG_v=1
 # export GLOG_logtostderr=1
-export CUDA_VISIBLE_DEVICES=0        # which GPU to use
+#export CUDA_VISIBLE_DEVICES=0        # which GPU to use
 
 ERNIE_PRETRAINED_MODEL_PATH=./pretrained/
 ERNIE_FINETUNED_MODEL_PATH=./model_finetuned
@@ -15,20 +15,21 @@ DATA_PATH=./data/
 # train
 function run_train() {
     echo "training"
+    date
     python run_ernie_sequence_labeling.py \
         --mode train \
         --ernie_config_path "${ERNIE_PRETRAINED_MODEL_PATH}/ernie_config.json" \
         --model_save_dir "./ernie_models" \
         --init_pretraining_params "${ERNIE_PRETRAINED_MODEL_PATH}/params/" \
-        --epoch 10 \
-        --save_steps 5 \
-        --validation_steps 5 \
+        --epoch 2 \
+        --save_steps 10000 \
+        --validation_steps 2000 \
         --base_learning_rate 2e-4 \
         --crf_learning_rate 0.2 \
         --init_bound 0.1 \
-        --print_steps 1 \
+        --print_steps 200 \
         --vocab_path "${ERNIE_PRETRAINED_MODEL_PATH}/vocab.txt" \
-        --batch_size 3 \
+        --batch_size 64 \
         --random_seed 0 \
         --num_labels 57 \
         --max_seq_len 128 \
@@ -38,6 +39,7 @@ function run_train() {
         --do_lower_case true \
         --use_cuda false \
         --cpu_num 1
+     date
 }
 
 function run_train_single_gpu() {

@@ -2,17 +2,19 @@
 export FLAGS_fraction_of_gpu_memory_to_use=0.02
 export FLAGS_eager_delete_tensor_gb=0.0
 export FLAGS_fast_eager_deletion_mode=1
-export CUDA_VISIBLE_DEVICES=0,1,2,3     #   which GPU to use
+
 
 function run_train() {
+    export CUDA_VISIBLE_DEVICES=0,1,2,3     #   which GPU to use
     echo "training"
+    date
     python train.py \
         --train_data ./data/data/train.tsv \
         --test_data ./data/data/test.tsv \
         --model_save_dir ./padding_models \
         --validation_steps 2000 \
         --save_steps 10000 \
-        --print_steps 1000 \
+        --print_steps 200 \
         --batch_size 400 \
         --epoch 10 \
         --traindata_shuffle_buffer 20000 \
@@ -28,6 +30,7 @@ function run_train() {
         --enable_ce false \
         --use_cuda true \
         --cpu_num 1
+     date
 }
 
 function run_train_single_gpu() {
