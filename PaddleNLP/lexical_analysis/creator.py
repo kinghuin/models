@@ -151,8 +151,8 @@ def create_ernie_model(args,
     }
     embeddings = ernie_encoder(ernie_inputs, ernie_config=ernie_config)
 
-    words = fluid.layers.sequence_unpad(src_ids, seq_lens)
-    labels = fluid.layers.sequence_unpad(padded_labels, seq_lens)
+    # words = fluid.layers.sequence_unpad(src_ids, seq_lens)
+    # labels = fluid.layers.sequence_unpad(padded_labels, seq_lens)
 
 
     # sentence_embeddings = embeddings["sentence_embeddings"]
@@ -165,7 +165,8 @@ def create_ernie_model(args,
             initializer=fluid.initializer.Uniform(
                 low=-args.init_bound, high=args.init_bound),
             regularizer=fluid.regularizer.L2DecayRegularizer(
-                regularization_coeff=1e-4)))
+                regularization_coeff=1e-4)),
+        num_flatten_dims=2)
 
 
     if is_prediction:
@@ -174,7 +175,7 @@ def create_ernie_model(args,
                                       dtype=emission.dtype,
                                       name='crfw')
         crf_decode = fluid.layers.crf_decoding(
-            input=emission, param_attr=fluid.ParamAttr(name='crfw'))
+            input=emission, param_attr=fluid.ParamAttr(name='crfw'),length=seq_lens)
         ret= {
             "feed_list": [src_ids, sent_ids, pos_ids, input_mask, seq_lens],
             "crf_decode":crf_decode}
@@ -182,10 +183,11 @@ def create_ernie_model(args,
     else:
         crf_cost = fluid.layers.linear_chain_crf(
             input=emission,
-            label=labels,
+            label=padded_labels,
             param_attr=fluid.ParamAttr(
                 name='crfw',
-                learning_rate=args.crf_learning_rate))
+                learning_rate=args.crf_learning_rate),
+            length=seq_lens)
         avg_cost = fluid.layers.mean(x=crf_cost)
         crf_decode = fluid.layers.crf_decoding(
             input=emission, param_attr=fluid.ParamAttr(name='crfw'))
@@ -194,16 +196,17 @@ def create_ernie_model(args,
         (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
          num_correct_chunks) = fluid.layers.chunk_eval(
              input=crf_decode,
-             label=labels,
+             label=padded_labels,
              chunk_scheme="IOB",
-             num_chunk_types=int(math.ceil((args.num_labels - 1) / 2.0)))
+             num_chunk_types=int(math.ceil((args.num_labels - 1) / 2.0)),
+                length=seq_lens)
         chunk_evaluator = fluid.metrics.ChunkEvaluator()
         chunk_evaluator.reset()
 
         ret = {
             "feed_list": [src_ids, sent_ids, pos_ids, input_mask, padded_labels, seq_lens],
-            "words":words,
-            "labels":labels,
+            "words":src_ids,
+            "labels":padded_labels,
             "avg_cost":avg_cost,
             "crf_decode":crf_decode,
             "precision" : precision,
