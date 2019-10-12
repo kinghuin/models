@@ -201,9 +201,9 @@ def encoder_net(images,
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr)#,activation=fluid.layers.relu)
 
-    gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=length)
+    gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=H*W)
 
-    gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=length,is_reverse=True)
+    gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=H*W,is_reverse=True)
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
