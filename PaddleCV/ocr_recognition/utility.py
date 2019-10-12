@@ -86,10 +86,15 @@ def get_ctc_feeder_data(data, place, need_label=True):
         axis=0).astype("float32")
     pixel_tensor.set(pixel_data, place)
     label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
+    img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
+    length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
+
+
+
     if need_label:
-        return {"pixel": pixel_tensor, "label": label_tensor}
+        return {"pixel": pixel_tensor, "label": label_tensor, "img_length":img_length_tensor, "length":length_tensor }
     else:
-        return {"pixel": pixel_tensor}
+        return {"pixel": pixel_tensor, "length":length_tensor}
 
 
 def get_ctc_feeder_for_infer(data, place):

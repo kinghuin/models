@@ -126,13 +126,13 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         is_test=is_test,
         use_cudnn=use_cudnn)
-    N, _, H, _ = conv_features.shape
+    _, _, H, W = conv_features.shape
     sliced_feature = fluid.layers.im2sequence(
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
 
-    padding_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[N,-1,sliced_feature.shape[-1]])
+    padding_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
 
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
