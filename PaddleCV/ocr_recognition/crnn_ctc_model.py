@@ -277,8 +277,11 @@ def ctc_train_net(args, data_shape, num_classes):
     fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     # print("fc_out_t",fc_out_t)
     # 384 -1 96
+    casted_fc_out=fluid.layers.cast(x=fc_out, dtype='int64')
+    casted_label=fluid.layers.cast(x=label, dtype='int64')
+
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
+        input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
     # print("cost",cost)
     # 384 1
 
@@ -322,20 +325,22 @@ def ctc_eval(data_shape, num_classes, use_cudnn=True):
     images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32')
     label = fluid.layers.data(
         name='label', shape=[1,MAX_LABEL_LENGTH,1], dtype='int32', lod_level=1)
-    length = fluid.layers.data(
-        name='length', shape=[-1], dtype='int32', lod_level=0)
+    label_length = fluid.layers.data(
+        name='label_length', shape=[-1], dtype='int32', lod_level=0)
     img_length = fluid.layers.data(
         name='img_length', shape=[-1], dtype='int32', lod_level=0)
 
-    fc_out = encoder_net(images, num_classes, length, is_test=True, use_cudnn=use_cudnn)
+    fc_out = encoder_net(images, num_classes, label_length, is_test=True, use_cudnn=use_cudnn)
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
-        input=fc_out, blank=num_classes, input_length=length)
+        input=fc_out, blank=num_classes, input_length=label_length)
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
+    # casted_decoded_len = fluid.layers.cast(x=decoded_len, dtype='int64')
+    # casted_label_length = fluid.layers.cast(x=label_length, dtype='int64')
     error_evaluator = padding_edit_distance(
-        input=decoded_out, label=casted_label, input_length=decoded_len, label_length=length)
+        input=decoded_out, label=casted_label, input_length=decoded_len, label_length=label_length)
 
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=img_length,label_length=length)
+        input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=img_length,label_length=label_length)
 
     return error_evaluator, cost
