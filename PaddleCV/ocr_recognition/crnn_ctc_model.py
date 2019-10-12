@@ -193,23 +193,26 @@ def encoder_net(images,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
-    #
-    print(fc_1)
+    #-1 384 600
+    # print(fc_1)
 
     fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
-    print(fc_2)
+    # print(fc_2)
+    #-1 384 600
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
-    print(gru_forward)
+    # print(gru_forward)
+    # -1 384 200
 
     gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
-    print(gru_backward)
+    # print(gru_backward)
+    # -1 384 200
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -225,7 +228,8 @@ def encoder_net(images,
                              param_attr=w_attr,
                              bias_attr=b_attr,
                              num_flatten_dims=2)
-    print(fc_out)
+    # print(fc_out)
+    # -1 384 96
 
     return fc_out
 
@@ -252,19 +256,21 @@ def ctc_train_net(args, data_shape, num_classes):
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
+    print("fc_out",fc_out)
 
     fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
-    print(fc_out_t)
-
+    print("fc_out_t",fc_out_t)
+    # 384 -1 96
     cost = fluid.layers.warpctc(
         input=fc_out_t, label=label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
-    print(cost)
+    print("cost",cost)
+    # 384 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
-
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=label_length)
-    print(decoded_out)
+    print("decoded_out",decoded_out)
+    # -1 384
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
 
