@@ -18,7 +18,41 @@ import paddle.fluid as fluid
 from paddle.fluid.layers.learning_rate_scheduler import _decay_step_counter
 from paddle.fluid.initializer import init_on_cpu
 import math
+import numpy as np
 import six
+
+class padding_edit_distance(fluid.evaluator.EditDistance):
+    def __init__(self, input, label, input_length, label_length, ignored_tokens=None, **kwargs):
+        super(fluid.evaluator.EditDistance, self).__init__("edit_distance", **kwargs)
+        main_program = self.helper.main_program
+        if main_program.current_block().idx != 0:
+            raise ValueError("You can only invoke Evaluator in root block")
+
+        self.total_distance = self._create_state(
+            dtype='float32', shape=[1], suffix='total_distance')
+        self.seq_num = self._create_state(
+            dtype='int64', shape=[1], suffix='seq_num')
+        self.instance_error = self._create_state(
+            dtype='int64', shape=[1], suffix='instance_error')
+        distances, seq_num = fluid.layers.edit_distance(
+            input=input, label=label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
+
+        zero = fluid.layers.fill_constant(shape=[1], value=0.0, dtype='float32')
+        compare_result = fluid.layers.equal(distances, zero)
+        compare_result_int = fluid.layers.cast(x=compare_result, dtype='int64')
+        seq_right_count = fluid.layers.reduce_sum(compare_result_int)
+        instance_error_count = fluid.layers.elementwise_sub(
+            x=seq_num, y=seq_right_count)
+        total_distance = fluid.layers.reduce_sum(distances)
+        fluid.layers.sums(
+            input=[self.total_distance, total_distance],
+            out=self.total_distance)
+        fluid.layers.sums(input=[self.seq_num, seq_num], out=self.seq_num)
+        fluid.layers.sums(
+            input=[self.instance_error, instance_error_count],
+            out=self.instance_error)
+        self.metrics.append(total_distance)
+        self.metrics.append(instance_error_count)
 
 
 def conv_bn_pool(input,
@@ -212,8 +246,8 @@ def ctc_train_net(args, data_shape, num_classes):
     decoded_out = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=length)
     casted_label = fluid.layers.cast(x=label, dtype='int64')
-    error_evaluator = fluid.evaluator.EditDistance(
-        input=decoded_out, label=casted_label)
+    error_evaluator = padding_edit_distance(
+        input=decoded_out, label=casted_label, input_length=img_length, label_length=length)
     inference_program = fluid.default_main_program().clone(for_test=True)
     if learning_rate_decay == "piecewise_decay":
         learning_rate = fluid.layers.piecewise_decay([
@@ -253,8 +287,8 @@ def ctc_eval(data_shape, num_classes, use_cudnn=True):
         input=fc_out, blank=num_classes, input_length=length)
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
-    error_evaluator = fluid.evaluator.EditDistance(
-        input=decoded_out, label=casted_label)
+    error_evaluator = padding_edit_distance(
+        input=decoded_out, label=casted_label, input_length=img_length, label_length=length)
 
     cost = fluid.layers.warpctc(
         input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=img_length,label_length=length)
