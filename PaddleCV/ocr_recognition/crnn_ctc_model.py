@@ -20,7 +20,7 @@ from paddle.fluid.initializer import init_on_cpu
 import math
 import numpy as np
 import six
-
+MAX_LABEL_LENGTH = 23
 class padding_edit_distance(fluid.evaluator.EditDistance):
     def __init__(self, input, label, input_length, label_length, ignored_tokens=None, **kwargs):
         super(fluid.evaluator.EditDistance, self).__init__("edit_distance", **kwargs)
@@ -239,7 +239,7 @@ def encoder_net(images,
 
 
 def ctc_train_net(args, data_shape, num_classes):
-    MAX_LABEL_LENGTH = 23
+
     L2_RATE = args.l2decay
     LR = args.lr
     MOMENTUM = args.momentum
@@ -315,7 +315,7 @@ def ctc_infer(images, num_classes, length, use_cudnn=True):
 def ctc_eval(data_shape, num_classes, use_cudnn=True):
     images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32')
     label = fluid.layers.data(
-        name='label', shape=[1], dtype='int32', lod_level=1)
+        name='label', shape=[1,MAX_LABEL_LENGTH,1], dtype='int32', lod_level=1)
     length = fluid.layers.data(
         name='length', shape=[-1], dtype='int32', lod_level=0)
     img_length = fluid.layers.data(
