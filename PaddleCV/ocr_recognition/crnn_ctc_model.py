@@ -281,7 +281,7 @@ def ctc_train_net(args, data_shape, num_classes):
     casted_label=fluid.layers.cast(x=label, dtype='int32')
     fluid.layers.Print(casted_fc_out)
     fluid.layers.Print(casted_label)
-    fluid.layers.Print(num_classes)
+    # fluid.layers.Print(num_classes)
     fluid.layers.Print(seq_length)
     fluid.layers.Print(label_length)
     cost = fluid.layers.warpctc(
