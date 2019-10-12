@@ -165,6 +165,7 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         is_test=is_test,
         use_cudnn=use_cudnn)
+    fluid.layers.Print(conv_features)
     _, _, H, W = conv_features.shape
     sliced_feature = fluid.layers.im2sequence(
         input=conv_features,
@@ -252,9 +253,10 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int32', lod_level=0)
-    # fluid.layers.Print(label)
-    # fluid.layers.Print(label_length)
-    # fluid.layers.Print(seq_length)
+    fluid.layers.Print(images)
+    fluid.layers.Print(label)
+    fluid.layers.Print(label_length)
+    fluid.layers.Print(seq_length)
 
     fc_out = encoder_net(
         images,
