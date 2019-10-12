@@ -254,9 +254,9 @@ def ctc_train_net(args, data_shape, num_classes):
     label = fluid.layers.data(
         name='label', shape=[-1,MAX_LABEL_LENGTH,1], dtype='int32', lod_level=0)
     label_length = fluid.layers.data(
-        name='label_length', shape=[-1], dtype='int32', lod_level=0)
+        name='label_length', shape=[-1], dtype='int64', lod_level=0)
     seq_length=fluid.layers.data(
-        name='seq_length', shape=[-1], dtype='int32', lod_level=0)
+        name='seq_length', shape=[-1], dtype='int64', lod_level=0)
     # fluid.layers.Print(images)
     # fluid.layers.Print(label)
     # fluid.layers.Print(label_length)
@@ -277,7 +277,7 @@ def ctc_train_net(args, data_shape, num_classes):
     fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     # print("fc_out_t",fc_out_t)
     # 384 -1 96
-    casted_fc_out=fluid.layers.cast(x=fc_out, dtype='float32')
+    casted_fc_out=fluid.layers.cast(x=fc_out, dtype='int64')
     casted_label=fluid.layers.cast(x=label, dtype='int32')
 
     cost = fluid.layers.warpctc(
