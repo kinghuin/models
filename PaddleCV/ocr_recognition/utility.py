@@ -85,11 +85,14 @@ def get_ctc_feeder_data(data, place, need_label=True):
         list(map(lambda x: x[0][np.newaxis, :], data)),
         axis=0).astype("float32")
     pixel_tensor.set(pixel_data, place)
-    label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
+    # label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
+    label_tensor = fluid.LoDTensor()
+    label_tensor.set(list(map(lambda x: x[1], data)), place)
     img_length_tensor = fluid.LoDTensor()
-    img_length_tensor.set(data[2], place)
+    img_length_tensor.set(list(map(lambda x: x[2], data)), place)
     length_tensor=fluid.LoDTensor()
-    img_length_tensor.set(data[3], place)
+    img_length_tensor.set(list(map(lambda x: x[3], data)), place)
+
     # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
     # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
 
