@@ -153,6 +153,7 @@ def ocr_convs(input,
 def encoder_net(images,
                 num_classes,
                 seq_length,
+                batch_size,
                 rnn_hidden_size=200,
                 regularizer=None,
                 gradient_clip=None,
@@ -174,7 +175,7 @@ def encoder_net(images,
     fluid.layers.Print(sliced_feature)
     # -1 768
 
-    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
+    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[batch_size, -1, sliced_feature.shape[-1]])
     fluid.layers.Print(reshape_sliced_feature)
     #-1 384 768
     # print(reshape_sliced_feature)
@@ -255,15 +256,16 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int32', lod_level=0)
-    fluid.layers.Print(images)
-    fluid.layers.Print(label)
-    fluid.layers.Print(label_length)
-    fluid.layers.Print(seq_length)
-
+    # fluid.layers.Print(images)
+    # fluid.layers.Print(label)
+    # fluid.layers.Print(label_length)
+    # fluid.layers.Print(seq_length)
+    batch_size=args.batch_size
     fc_out = encoder_net(
         images,
         num_classes,
         seq_length,
+        batch_size,
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
