@@ -168,9 +168,11 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
-    print(sliced_feature)
+    # -1 768
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
+
+    print(reshape_sliced_feature)
 
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
