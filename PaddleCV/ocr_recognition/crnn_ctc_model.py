@@ -204,6 +204,7 @@ def encoder_net(images,
     # print(fc_2)
     #-1 384 600
 
+
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
@@ -248,6 +249,9 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int32', lod_level=0)
+    fluid.layers.Print(label)
+    fluid.layers.Print(label_length)
+    fluid.layers.Print(seq_length)
 
     fc_out = encoder_net(
         images,
