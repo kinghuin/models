@@ -169,7 +169,7 @@ def encoder_net(images,
         stride=[1, 1],
         filter_size=[H, 1])
 
-    padding_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
+    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
 
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -185,13 +185,13 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         initializer=fluid.initializer.Normal(0.0, 0.02))
 
-    fc_1 = fluid.layers.fc(input=padding_sliced_feature,
+    fc_1 = fluid.layers.fc(input=reshape_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
 
-    fc_2 = fluid.layers.fc(input=padding_sliced_feature,
+    fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
@@ -199,7 +199,7 @@ def encoder_net(images,
 
     print(fc_1,fc_2)
 
-    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
+    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr)#,activation=fluid.layers.relu)
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=length)
 
