@@ -287,7 +287,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # fluid.layers.Print(seq_length)
     # fluid.layers.Print(label_length)
     cost = fluid.layers.warpctc(
-        input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=label_length)
+        input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
     # print("cost",cost)
     # 384 1
 
