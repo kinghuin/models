@@ -146,10 +146,10 @@ class DataGenerator(object):
                         img = img.resize((sz[0], DATA_SHAPE[1]))
                         img = np.array(img) - 127.5
                         img = img[np.newaxis, ...]
-                        img_length = 1
+                        seq_length = 384
                         # sequence_length =
                         if self.model == "crnn_ctc":
-                            result.append([img, label, img_length, label_length])
+                            result.append([img, label, seq_length, label_length])
                         else:
                             result.append([img, [SOS] + label, label + [EOS]])  # We did not implement attention-model
                     yield result

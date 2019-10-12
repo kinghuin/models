@@ -150,7 +150,7 @@ def ocr_convs(input,
 
 def encoder_net(images,
                 num_classes,
-                label_length,
+                seq_length,
                 rnn_hidden_size=200,
                 regularizer=None,
                 gradient_clip=None,
@@ -199,7 +199,7 @@ def encoder_net(images,
 
     # print(fc_1,fc_2)
     # seq_length = fluid.layers.assign(label_length)
-    seq_length= fluid.layers.fill_constant(shape=label_length.shape, dtype="int32", value=H*W)
+    # seq_length= fluid.layers.fill_constant(shape=label_length.shape, dtype="int32", value=H*W)
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
@@ -222,7 +222,7 @@ def encoder_net(images,
                              bias_attr=b_attr,
                              num_flatten_dims=2)
 
-    return fc_out,seq_length
+    return fc_out
 
 
 def ctc_train_net(args, data_shape, num_classes):
@@ -237,13 +237,13 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label', shape=[-1,1], dtype='int32', lod_level=0)
     label_length = fluid.layers.data(
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
-    img_length=fluid.layers.data(
-        name='img_length', shape=[-1], dtype='int32', lod_level=0)
+    seq_length=fluid.layers.data(
+        name='seq_length', shape=[-1], dtype='int32', lod_level=0)
 
-    fc_out,seq_length = encoder_net(
+    fc_out = encoder_net(
         images,
         num_classes,
-        label_length,
+        seq_length,
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
