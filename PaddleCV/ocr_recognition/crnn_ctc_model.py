@@ -34,12 +34,12 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
             dtype='int64', shape=[1], suffix='seq_num')
         self.instance_error = self._create_state(
             dtype='int64', shape=[1], suffix='instance_error')
-        print(input)
-        print(label)
-        fluid.layers.Print(input,summarize=5)
-        fluid.layers.Print(label,summarize=5)
+        # print(input)
+        # print(label)
+        # fluid.layers.Print(input,summarize=5)
+        # fluid.layers.Print(label,summarize=5)
         squeeze_label=fluid.layers.squeeze(label, axes=[-1])
-        print(squeeze_label)
+        # print(squeeze_label)
         distances, seq_num = fluid.layers.edit_distance(
             input=input, label=squeeze_label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
 
@@ -167,7 +167,7 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         is_test=is_test,
         use_cudnn=use_cudnn)
-    fluid.layers.Print(conv_features)
+    # fluid.layers.Print(conv_features)
     _, _, H, W = conv_features.shape
     sliced_feature = fluid.layers.im2sequence(
         input=conv_features,
@@ -177,7 +177,7 @@ def encoder_net(images,
     # -1 768
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
-    fluid.layers.Print(reshape_sliced_feature)
+    # fluid.layers.Print(reshape_sliced_feature)
     #-1 384 768
     # print(reshape_sliced_feature)
 
@@ -281,11 +281,11 @@ def ctc_train_net(args, data_shape, num_classes):
     casted_label=fluid.layers.cast(x=label, dtype='int32')
     casted_seq_length = fluid.layers.cast(x=seq_length, dtype='int32')
     casted_label_length = fluid.layers.cast(x=label_length, dtype='int32')
-    # fluid.layers.Print(casted_fc_out)
-    # fluid.layers.Print(casted_label)
+    fluid.layers.Print(casted_fc_out)
+    fluid.layers.Print(casted_label)
     # fluid.layers.Print(num_classes)
-    # fluid.layers.Print(seq_length)
-    # fluid.layers.Print(label_length)
+    fluid.layers.Print(casted_seq_length)
+    fluid.layers.Print(casted_label_length)
     cost = fluid.layers.warpctc(
         input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
     # print("cost",cost)
