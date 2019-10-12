@@ -168,6 +168,7 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
+    print(sliced_feature)
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
 
@@ -196,10 +197,6 @@ def encoder_net(images,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
-
-    # print(fc_1,fc_2)
-    # seq_length = fluid.layers.assign(label_length)
-    # seq_length= fluid.layers.fill_constant(shape=label_length.shape, dtype="int32", value=H*W)
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
