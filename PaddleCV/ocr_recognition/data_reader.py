@@ -146,7 +146,7 @@ class DataGenerator(object):
                         img = img.resize((sz[0], DATA_SHAPE[1]))
                         img = np.array(img) - 127.5
                         img = img[np.newaxis, ...]
-                        seq_length = 384
+                        seq_length = 48
                         # sequence_length =
                         if self.model == "crnn_ctc":
                             result.append([img, label, seq_length, label_length])
