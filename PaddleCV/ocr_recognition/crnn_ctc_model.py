@@ -113,21 +113,26 @@ def ocr_convs(input,
 
 def encoder_net(images,
                 num_classes,
+                length,
                 rnn_hidden_size=200,
                 regularizer=None,
                 gradient_clip=None,
                 is_test=False,
-                use_cudnn=False):
+                use_cudnn=False,
+                ):
     conv_features = ocr_convs(
         images,
         regularizer=regularizer,
         gradient_clip=gradient_clip,
         is_test=is_test,
         use_cudnn=use_cudnn)
+    N, _, H, _ = conv_features.shape
     sliced_feature = fluid.layers.im2sequence(
         input=conv_features,
         stride=[1, 1],
-        filter_size=[conv_features.shape[2], 1])
+        filter_size=[H, 1])
+
+    padding_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[N,-1,sliced_feature.shape[-1]])
 
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -143,28 +148,22 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         initializer=fluid.initializer.Normal(0.0, 0.02))
 
-    fc_1 = fluid.layers.fc(input=sliced_feature,
+    fc_1 = fluid.layers.fc(input=padding_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
-                           bias_attr=bias_attr_nobias)
-    fc_2 = fluid.layers.fc(input=sliced_feature,
+                           bias_attr=bias_attr_nobias,
+                           num_flatten_dims=2)
+    fc_2 = fluid.layers.fc(input=padding_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
-                           bias_attr=bias_attr_nobias)
+                           bias_attr=bias_attr_nobias,
+                           num_flatten_dims=2)
 
-    gru_forward = fluid.layers.dynamic_gru(
-        input=fc_1,
-        size=rnn_hidden_size,
-        param_attr=para_attr,
-        bias_attr=bias_attr,
-        candidate_activation='relu')
-    gru_backward = fluid.layers.dynamic_gru(
-        input=fc_2,
-        size=rnn_hidden_size,
-        is_reverse=True,
-        param_attr=para_attr,
-        bias_attr=bias_attr,
-        candidate_activation='relu')
+    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
+
+    gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=length)
+
+    gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=length,is_reverse=True)
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -178,7 +177,8 @@ def encoder_net(images,
     fc_out = fluid.layers.fc(input=[gru_forward, gru_backward],
                              size=num_classes + 1,
                              param_attr=w_attr,
-                             bias_attr=b_attr)
+                             bias_attr=b_attr,
+                             num_flatten_dims=2)
 
     return fc_out
 
@@ -190,19 +190,27 @@ def ctc_train_net(args, data_shape, num_classes):
     learning_rate_decay = None
     regularizer = fluid.regularizer.L2Decay(L2_RATE)
 
-    images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32')
+    images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32',lod_level=0)
     label = fluid.layers.data(
-        name='label', shape=[1], dtype='int32', lod_level=1)
+        name='label', shape=[-1,1], dtype='int32', lod_level=0)
+    length = fluid.layers.data(
+        name='length', shape=[-1], dtype='int32', lod_level=0)
+    img_length=fluid.layers.data(
+        name='img_length', shape=[-1], dtype='int32', lod_level=0)
+
     fc_out = encoder_net(
         images,
         num_classes,
+        length,
         regularizer=regularizer,
-        use_cudnn=True if args.use_gpu else False)
+        use_cudnn=True if args.use_gpu else False,
+    )
+    fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True)
+        input=fc_out_t, label=label, blank=num_classes, norm_by_times=True,input_length=img_length,label_length=length)
     sum_cost = fluid.layers.reduce_sum(cost)
     decoded_out = fluid.layers.ctc_greedy_decoder(
-        input=fc_out, blank=num_classes)
+        input=fc_out, blank=num_classes,input_length=length)
     casted_label = fluid.layers.cast(x=label, dtype='int64')
     error_evaluator = fluid.evaluator.EditDistance(
         input=decoded_out, label=casted_label)
@@ -226,24 +234,29 @@ def ctc_train_net(args, data_shape, num_classes):
     return sum_cost, error_evaluator, inference_program, model_average
 
 
-def ctc_infer(images, num_classes, use_cudnn=True):
-    fc_out = encoder_net(images, num_classes, is_test=True, use_cudnn=use_cudnn)
-    return fluid.layers.ctc_greedy_decoder(input=fc_out, blank=num_classes)
+def ctc_infer(images, num_classes, length, use_cudnn=True):
+    fc_out = encoder_net(images, num_classes, length, is_test=True, use_cudnn=use_cudnn)
+    return fluid.layers.ctc_greedy_decoder(input=fc_out, blank=num_classes,input_length=length)
 
 
 def ctc_eval(data_shape, num_classes, use_cudnn=True):
     images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32')
     label = fluid.layers.data(
         name='label', shape=[1], dtype='int32', lod_level=1)
-    fc_out = encoder_net(images, num_classes, is_test=True, use_cudnn=use_cudnn)
+    length = fluid.layers.data(
+        name='length', shape=[-1], dtype='int32', lod_level=0)
+    img_length = fluid.layers.data(
+        name='img_length', shape=[-1], dtype='int32', lod_level=0)
+
+    fc_out = encoder_net(images, num_classes, length, is_test=True, use_cudnn=use_cudnn)
     decoded_out = fluid.layers.ctc_greedy_decoder(
-        input=fc_out, blank=num_classes)
+        input=fc_out, blank=num_classes, input_length=length)
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
     error_evaluator = fluid.evaluator.EditDistance(
         input=decoded_out, label=casted_label)
 
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True)
+        input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=img_length,label_length=length)
 
     return error_evaluator, cost

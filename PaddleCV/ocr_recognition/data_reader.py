@@ -33,6 +33,7 @@ SOS = 0
 EOS = 1
 NUM_CLASSES = 95
 DATA_SHAPE = [1, 48, 512]
+MAX_LABEL_LENGTH=23
 
 DATA_MD5 = "7256b1d5420d8c3e74815196e58cdad5"
 DATA_URL = "http://paddle-ocr-data.bj.bcebos.com/data.tar.gz"
@@ -135,6 +136,9 @@ class DataGenerator(object):
                         items = line.split(' ')
 
                         label = [int(c) for c in items[-1].split(',')]
+                        label_length = len(label)
+                        pad = [0] * (MAX_LABEL_LENGTH - label_length)
+                        label = label + pad
                         img = Image.open(os.path.join(img_root_dir, items[
                             2])).convert('L')
                         if j == 0:
@@ -143,9 +147,9 @@ class DataGenerator(object):
                         img = np.array(img) - 127.5
                         img = img[np.newaxis, ...]
                         if self.model == "crnn_ctc":
-                            result.append([img, label])
+                            result.append([img, label, 1, label_length])
                         else:
-                            result.append([img, [SOS] + label, label + [EOS]])
+                            result.append([img, [SOS] + label, label + [EOS]])  # We did not implement attention-model
                     yield result
                 if not cycle:
                     break
