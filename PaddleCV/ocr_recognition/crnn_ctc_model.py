@@ -236,6 +236,7 @@ def encoder_net(images,
 
 
 def ctc_train_net(args, data_shape, num_classes):
+    MAX_LABEL_LENGTH = 23
     L2_RATE = args.l2decay
     LR = args.lr
     MOMENTUM = args.momentum
@@ -244,7 +245,7 @@ def ctc_train_net(args, data_shape, num_classes):
 
     images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32',lod_level=0)
     label = fluid.layers.data(
-        name='label', shape=[-1,1], dtype='int32', lod_level=0)
+        name='label', shape=[-1,MAX_LABEL_LENGTH,1], dtype='int32', lod_level=0)
     label_length = fluid.layers.data(
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
     seq_length=fluid.layers.data(
