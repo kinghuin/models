@@ -171,8 +171,8 @@ def encoder_net(images,
     # -1 768
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, H*W, sliced_feature.shape[-1]])
-
-    print(reshape_sliced_feature)
+    #-1 384 768
+    # print(reshape_sliced_feature)
 
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -193,18 +193,23 @@ def encoder_net(images,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
+    #
+    print(fc_1)
 
     fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
+    print(fc_2)
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
+    print(gru_forward)
 
     gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
+    print(gru_backward)
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -220,6 +225,7 @@ def encoder_net(images,
                              param_attr=w_attr,
                              bias_attr=b_attr,
                              num_flatten_dims=2)
+    print(fc_out)
 
     return fc_out
 
@@ -246,17 +252,25 @@ def ctc_train_net(args, data_shape, num_classes):
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
+
     fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
+    print(fc_out_t)
+
     cost = fluid.layers.warpctc(
         input=fc_out_t, label=label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
+    print(cost)
+
     sum_cost = fluid.layers.reduce_sum(cost)
 
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=label_length)
+    print(decoded_out)
+
     casted_label = fluid.layers.cast(x=label, dtype='int64')
 
     error_evaluator = padding_edit_distance(
         input=decoded_out, label=casted_label, input_length=decoded_len, label_length=label_length)
+
     inference_program = fluid.default_main_program().clone(for_test=True)
     if learning_rate_decay == "piecewise_decay":
         learning_rate = fluid.layers.piecewise_decay([
