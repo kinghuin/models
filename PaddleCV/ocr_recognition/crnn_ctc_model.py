@@ -264,7 +264,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # 384 -1 96
     cost = fluid.layers.warpctc(
         input=fc_out, label=label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
-    # print("cost",cost)
+    print("cost",cost)
     # 384 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
