@@ -164,6 +164,8 @@ def encoder_net(images,
         is_test=is_test,
         use_cudnn=use_cudnn)
     _, _, H, W = conv_features.shape
+    print(H)
+    print(W)
     sliced_feature = fluid.layers.im2sequence(
         input=conv_features,
         stride=[1, 1],
@@ -199,7 +201,7 @@ def encoder_net(images,
 
     print(fc_1,fc_2)
 
-    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr)#,activation=fluid.layers.relu)
+    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=H*W)
 
