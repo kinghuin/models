@@ -35,8 +35,8 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
         self.instance_error = self._create_state(
             dtype='int64', shape=[1], suffix='instance_error')
 
-        fluid.layers.Print(input_length,summarize=5)
-        fluid.layers.Print(label_length,summarize=5)
+        # fluid.layers.Print(input_length,summarize=5)
+        # fluid.layers.Print(label_length,summarize=5)
         distances, seq_num = fluid.layers.edit_distance(
             input=input, label=label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
 
@@ -246,11 +246,13 @@ def ctc_train_net(args, data_shape, num_classes):
     cost = fluid.layers.warpctc(
         input=fc_out_t, label=label, blank=num_classes, norm_by_times=True,input_length=img_length,label_length=length)
     sum_cost = fluid.layers.reduce_sum(cost)
-    decoded_out = fluid.layers.ctc_greedy_decoder(
+
+    decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=length)
     casted_label = fluid.layers.cast(x=label, dtype='int64')
+
     error_evaluator = padding_edit_distance(
-        input=decoded_out, label=casted_label, input_length=img_length, label_length=length)
+        input=decoded_out, label=casted_label, input_length=decoded_len, label_length=length)
     inference_program = fluid.default_main_program().clone(for_test=True)
     if learning_rate_decay == "piecewise_decay":
         learning_rate = fluid.layers.piecewise_decay([
@@ -286,12 +288,12 @@ def ctc_eval(data_shape, num_classes, use_cudnn=True):
         name='img_length', shape=[-1], dtype='int32', lod_level=0)
 
     fc_out = encoder_net(images, num_classes, length, is_test=True, use_cudnn=use_cudnn)
-    decoded_out = fluid.layers.ctc_greedy_decoder(
+    decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes, input_length=length)
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
     error_evaluator = padding_edit_distance(
-        input=decoded_out, label=casted_label, input_length=img_length, label_length=length)
+        input=decoded_out, label=casted_label, input_length=decoded_len, label_length=length)
 
     cost = fluid.layers.warpctc(
         input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=img_length,label_length=length)
