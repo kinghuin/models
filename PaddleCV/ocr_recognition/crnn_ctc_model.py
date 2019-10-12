@@ -34,10 +34,10 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
             dtype='int64', shape=[1], suffix='seq_num')
         self.instance_error = self._create_state(
             dtype='int64', shape=[1], suffix='instance_error')
-        # print(input)
-        # print(label)
-        # fluid.layers.Print(input,summarize=5)
-        # fluid.layers.Print(label,summarize=5)
+        print(input)
+        print(label)
+        fluid.layers.Print(input,summarize=5)
+        fluid.layers.Print(label,summarize=5)
         squeeze_label=fluid.layers.squeeze(label, axes=[-1])
         distances, seq_num = fluid.layers.edit_distance(
             input=input, label=squeeze_label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
