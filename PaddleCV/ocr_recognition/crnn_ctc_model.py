@@ -190,11 +190,14 @@ def encoder_net(images,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
+
     fc_2 = fluid.layers.fc(input=padding_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
+
+    print(fc_1,fc_2)
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
