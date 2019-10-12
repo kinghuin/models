@@ -176,7 +176,7 @@ def encoder_net(images,
     fluid.layers.Print(sliced_feature)
     # -1 768
 
-    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, sliced_feature.shape[1]//batch_size, sliced_feature.shape[-1]])
+    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, sliced_feature.shape[0]//batch_size, sliced_feature.shape[-1]])
     fluid.layers.Print(reshape_sliced_feature)
     #-1 384 768
     # print(reshape_sliced_feature)
@@ -262,7 +262,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # fluid.layers.Print(label_length)
     # fluid.layers.Print(seq_length)
     batch_size=args.batch_size
-    print(batch_size)
+
     fc_out = encoder_net(
         images,
         num_classes,
