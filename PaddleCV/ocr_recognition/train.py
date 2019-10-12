@@ -32,7 +32,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
-add_arg('batch_size',        int,     2,         "Minibatch size.")
+add_arg('batch_size',        int,     32,         "Minibatch size.")
 
 add_arg('lr',                float,   1e-3,         "Learning rate.")
 add_arg('lr_decay_strategy', str,     None,         "Learning rate decay strategy. 'piecewise_decay' or None is valid.")
