@@ -35,8 +35,9 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
         self.instance_error = self._create_state(
             dtype='int64', shape=[1], suffix='instance_error')
 
-        # fluid.layers.Print(input_length,summarize=5)
-        # fluid.layers.Print(label_length,summarize=5)
+        fluid.layers.Print(input,summarize=5)
+        fluid.layers.Print(label,summarize=5)
+
         distances, seq_num = fluid.layers.edit_distance(
             input=input, label=label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
 
@@ -250,9 +251,9 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int32', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int32', lod_level=0)
-    fluid.layers.Print(label)
-    fluid.layers.Print(label_length)
-    fluid.layers.Print(seq_length)
+    # fluid.layers.Print(label)
+    # fluid.layers.Print(label_length)
+    # fluid.layers.Print(seq_length)
 
     fc_out = encoder_net(
         images,
@@ -269,7 +270,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # 384 -1 96
     cost = fluid.layers.warpctc(
         input=fc_out, label=label, blank=num_classes, norm_by_times=True,input_length=seq_length,label_length=label_length)
-    print("cost",cost)
+    # print("cost",cost)
     # 384 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
