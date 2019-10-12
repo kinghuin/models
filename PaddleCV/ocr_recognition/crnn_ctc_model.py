@@ -245,9 +245,9 @@ def ctc_train_net(args, data_shape, num_classes):
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
-    # fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
+    fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True,input_length=img_length,label_length=length)
+        input=fc_out_t, label=label, blank=num_classes, norm_by_times=True,input_length=img_length,label_length=length)
     sum_cost = fluid.layers.reduce_sum(cost)
 
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(

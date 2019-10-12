@@ -94,6 +94,10 @@ def get_ctc_feeder_data(data, place, need_label=True):
     img_length_tensor.set(list(map(lambda x: x[2], data)), place)
     length_tensor=fluid.LoDTensor()
     length_tensor.set(list(map(lambda x: x[3], data)), place)
+    print(pixel_tensor)
+    print(label_tensor)
+    print(img_length_tensor)
+    print(length_tensor)
 
     # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
     # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
