@@ -32,7 +32,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
-add_arg('batch_size',        int,     1,         "Minibatch size.")
+add_arg('batch_size',        int,     2,         "Minibatch size.")
 
 add_arg('lr',                float,   1e-3,         "Learning rate.")
 add_arg('lr_decay_strategy', str,     None,         "Learning rate decay strategy. 'piecewise_decay' or None is valid.")
@@ -41,7 +41,7 @@ add_arg('momentum',          float,   0.9,         "Momentum rate.")
 add_arg('gradient_clip',     float,   10.0,         "The threshold of gradient clipping.")
 
 add_arg('total_step',        int,     720000,    "The number of iterations. Zero or less means whole training set. More than 0 means the training set might be looped until # of iterations is reached.")
-add_arg('log_period',        int,     100,       "Log period.")
+add_arg('log_period',        int,     1,       "Log period.")
 add_arg('save_model_period', int,     15000,      "Save model period. '-1' means never saving the model.")
 add_arg('eval_period',       int,     15000,      "Evaluate period. '-1' means never evaluating the model.")
 add_arg('save_model_dir',    str,     "./models", "The directory the model to be saved to.")
