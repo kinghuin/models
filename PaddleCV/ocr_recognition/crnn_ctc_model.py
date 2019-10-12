@@ -173,10 +173,10 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
-    fluid.layers.Print(sliced_feature)
+    # fluid.layers.Print(sliced_feature)
     # -1 768
 
-    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, sliced_feature.shape[0]//batch_size, sliced_feature.shape[-1]])
+    reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
     fluid.layers.Print(reshape_sliced_feature)
     #-1 384 768
     # print(reshape_sliced_feature)
