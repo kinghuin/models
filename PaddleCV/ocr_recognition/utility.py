@@ -80,23 +80,29 @@ def to_lodtensor(data, place):
 
 def get_ctc_feeder_data(data, place, need_label=True):
     pixel_tensor = fluid.LoDTensor()
-    pixel_data = None
     pixel_data = np.concatenate(
         list(map(lambda x: x[0][np.newaxis, :], data)),
         axis=0).astype("float32")
     pixel_tensor.set(pixel_data, place)
-    # label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
-    label_tensor = fluid.LoDTensor()
-    label_tensor.set(list(map(lambda x: x[1], data)), place)
-    print(label_tensor)
+
+    # label_tensor = fluid.LoDTensor()
+    # label=np.array(list(map(lambda x: x[1], data))).astype('int32')
+    # label_tensor.set(label, place)
+    # print(label_tensor)
+    # seq_length_tensor = fluid.LoDTensor()
+    # seq_length_tensor.set(list(map(lambda x: x[2], data)), place)
+    # label_length_tensor = fluid.LoDTensor()
+    # label_length_tensor.set(list(map(lambda x: x[3], data)), place)
+
+    label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
+    seq_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
+    label_length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
+
     # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
     # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
     # label_tensor = fluid.LoDTensor()
     # label_tensor.set(list(map(lambda x: x[1], data)), place)
-    seq_length_tensor = fluid.LoDTensor()
-    seq_length_tensor.set(list(map(lambda x: x[2], data)), place)
-    label_length_tensor=fluid.LoDTensor()
-    label_length_tensor.set(list(map(lambda x: x[3], data)), place)
+
     # print("pixel_data")
     # print(pixel_data)
     # print("label")
