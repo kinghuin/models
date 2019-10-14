@@ -79,6 +79,8 @@ def to_lodtensor(data, place):
 
 
 def get_ctc_feeder_data(data, place, need_label=True):
+
+
     pixel_tensor = fluid.LoDTensor()
     pixel_data = np.concatenate(
         list(map(lambda x: x[0][np.newaxis, :], data)),
