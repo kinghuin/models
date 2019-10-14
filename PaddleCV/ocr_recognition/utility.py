@@ -85,10 +85,14 @@ def get_ctc_feeder_data(data, place, need_label=True):
         axis=0).astype("float32")
     pixel_tensor.set(pixel_data, place)
 
+    print(list(map(lambda x: x[1], data)))
     label = np.concatenate(list(map(lambda x: x[1], data)), axis=0).astype('int32')
+    print(label)
     label_tensor = fluid.LoDTensor().set(label, place)
 
+    print(list(map(lambda x: x[2], data)))
     seq_length = np.array(list(map(lambda x: x[2], data))).astype('int64')
+    print(seq_length)
     seq_length_tensor = fluid.LoDTensor().set(seq_length, place)
 
     label_length = np.array(list(map(lambda x: x[3], data))).astype('int64')
