@@ -260,7 +260,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # fluid.layers.Print(images)
     # fluid.layers.Print(label)
     # fluid.layers.Print(label_length)
-    # fluid.layers.Print(seq_length)
+    fluid.layers.Print(seq_length)
     batch_size=args.batch_size
 
     fc_out = encoder_net(
