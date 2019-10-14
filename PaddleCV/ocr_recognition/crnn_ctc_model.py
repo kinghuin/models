@@ -177,7 +177,7 @@ def encoder_net(images,
     # -1 768
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
-    fluid.layers.Print(reshape_sliced_feature)
+    # fluid.layers.Print(reshape_sliced_feature)
     #-1 384 768
     print(reshape_sliced_feature)
 
@@ -281,14 +281,14 @@ def ctc_train_net(args, data_shape, num_classes):
     # casted_label=fluid.layers.cast(x=label, dtype='int32')
     # casted_seq_length = fluid.layers.cast(x=seq_length, dtype='int64')
     # casted_label_length = fluid.layers.cast(x=label_length, dtype='int64')
-    fluid.layers.Print(fc_out)
+    # fluid.layers.Print(fc_out)
     # fluid.layers.Print(casted_fc_out)
-    fluid.layers.Print(label)
+    # fluid.layers.Print(label)
     # fluid.layers.Print(casted_label)
     # fluid.layers.Print(num_classes)
-    fluid.layers.Print(seq_length)
+    # fluid.layers.Print(seq_length)
     # fluid.layers.Print(casted_seq_length)
-    fluid.layers.Print(label_length)
+    # fluid.layers.Print(label_length)
     # fluid.layers.Print(casted_label_length)
     # cost = fluid.layers.warpctc(
     #     input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
