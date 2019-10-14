@@ -277,21 +277,24 @@ def ctc_train_net(args, data_shape, num_classes):
     fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     # print("fc_out_t",fc_out_t)
     # 384 -1 96
-    casted_fc_out=fluid.layers.cast(x=fc_out, dtype='float32')
-    casted_label=fluid.layers.cast(x=label, dtype='int32')
-    casted_seq_length = fluid.layers.cast(x=seq_length, dtype='int64')
-    casted_label_length = fluid.layers.cast(x=label_length, dtype='int64')
+    # casted_fc_out=fluid.layers.cast(x=fc_out, dtype='float32')
+    # casted_label=fluid.layers.cast(x=label, dtype='int32')
+    # casted_seq_length = fluid.layers.cast(x=seq_length, dtype='int64')
+    # casted_label_length = fluid.layers.cast(x=label_length, dtype='int64')
     fluid.layers.Print(fc_out)
-    fluid.layers.Print(casted_fc_out)
+    # fluid.layers.Print(casted_fc_out)
     fluid.layers.Print(label)
-    fluid.layers.Print(casted_label)
+    # fluid.layers.Print(casted_label)
     # fluid.layers.Print(num_classes)
     fluid.layers.Print(seq_length)
-    fluid.layers.Print(casted_seq_length)
+    # fluid.layers.Print(casted_seq_length)
     fluid.layers.Print(label_length)
-    fluid.layers.Print(casted_label_length)
+    # fluid.layers.Print(casted_label_length)
+    # cost = fluid.layers.warpctc(
+    #     input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
     cost = fluid.layers.warpctc(
-        input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
+        input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=seq_length,
+        label_length=label_length)
     # print("cost",cost)
     # 384 1
 
