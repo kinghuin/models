@@ -79,28 +79,28 @@ def to_lodtensor(data, place):
 
 
 def get_ctc_feeder_data(data, place, need_label=True):
-    pixel_data = np.concatenate(
-        list(map(lambda x: x[0][np.newaxis, :], data)),
-        axis=0).astype("float32")
-    pixel_tensor = fluid.LoDTensor().set(pixel_data, place)
+    # pixel_data = np.concatenate(
+    #     list(map(lambda x: x[0][np.newaxis, :], data)),
+    #     axis=0).astype("float32")
+    # pixel_tensor = fluid.LoDTensor().set(pixel_data, place)
 
-    print(list(map(lambda x: x[1], data)))
-    label = np.concatenate(list(map(lambda x: x[1], data)), axis=0).astype('int32')
-    print(label)
-    label_tensor = fluid.LoDTensor().set(label, place)
+    # print(list(map(lambda x: x[1], data)))
+    # label = np.concatenate(list(map(lambda x: x[1], data)), axis=0).astype('int32')
+    # print(label)
+    # label_tensor = fluid.LoDTensor().set(label, place)
+    #
+    # print(list(map(lambda x: x[2], data)))
+    # seq_length = np.array(list(map(lambda x: x[2], data))).astype('int64')
+    # print(seq_length)
+    # seq_length_tensor = fluid.LoDTensor().set(seq_length, place)
+    #
+    # label_length = np.array(list(map(lambda x: x[3], data))).astype('int64')
+    # label_length_tensor = fluid.LoDTensor().set(label_length, place)
 
-    print(list(map(lambda x: x[2], data)))
-    seq_length = np.array(list(map(lambda x: x[2], data))).astype('int64')
-    print(seq_length)
-    seq_length_tensor = fluid.LoDTensor().set(seq_length, place)
-
-    label_length = np.array(list(map(lambda x: x[3], data))).astype('int64')
-    label_length_tensor = fluid.LoDTensor().set(label_length, place)
-
-    pixel_tensor = np.array(list(map(lambda x: x[0],data)))
-    label_tensor= np.array(list(map(lambda x: x[1],data)))
-    seq_length_tensor=np.array(list(map(lambda x: x[2],data)))
-    label_length_tensor=np.array(list(map(lambda x: x[3],data)))
+    pixel_tensor = np.array(list(map(lambda x: x[0],data))).astype("float32")
+    label_tensor= np.array(list(map(lambda x: x[1],data))).astype('int32')
+    seq_length_tensor=np.array(list(map(lambda x: x[2],data))).astype('int64')
+    label_length_tensor=np.array(list(map(lambda x: x[3],data))).astype('int64')
     # print(label_tensor)
     # seq_length_tensor = fluid.LoDTensor()
     # seq_length_tensor.set(list(map(lambda x: x[2], data)), place)

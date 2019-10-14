@@ -257,9 +257,9 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int64', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int64', lod_level=0)
-    # fluid.layers.Print(images)
+    fluid.layers.Print(images)
     fluid.layers.Print(label)
-    # fluid.layers.Print(label_length)
+    fluid.layers.Print(label_length)
     fluid.layers.Print(seq_length)
     batch_size=args.batch_size
 
