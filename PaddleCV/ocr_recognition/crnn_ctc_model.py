@@ -161,6 +161,7 @@ def encoder_net(images,
                 is_test=False,
                 use_cudnn=False,
                 ):
+    print("images: {}".format(images.name))
     conv_features = ocr_convs(
         images,
         regularizer=regularizer,
@@ -173,8 +174,8 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
-    # fluid.layers.Print(sliced_feature)
-
+    print("sliced_feature: {}".format(sliced_feature.name))
+    fluid.layers.Print(sliced_feature, summarize=100, message="sliced_feature")
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
     # fluid.layers.Print(reshape_sliced_feature)
     #-1 48 768
@@ -201,7 +202,7 @@ def encoder_net(images,
                            num_flatten_dims=2)
     #-1 48 600
     # print(fc_1)
-
+    fluid.layers.Print(fc_1, summarize=100, message="fc_1")
     fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
@@ -209,17 +210,20 @@ def encoder_net(images,
                            num_flatten_dims=2)
     # print(fc_2)
     #-1 48 600
+    fluid.layers.Print(fc_2, summarize=100, message="fc_2")
 
+    gru_cell = fluid.layers.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
-    gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
-
-    gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
+    gru_forward, _ = fluid.layers.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
     # print(gru_forward)
     # -1 48 200
 
-    gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
+    gru_backward, _ = fluid.layers.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
     # print(gru_backward)
     # -1 48 200
+
+    print("gru_forward: {}".format(gru_forward.name))
+    fluid.layers.Print(gru_forward, summarize=100, message="gru_forward")
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -279,7 +283,7 @@ def ctc_train_net(args, data_shape, num_classes):
         label_length=label_length)
     # print("cost",cost)
     # 48 1
-    # fluid.layers.Print(cost)
+    fluid.layers.Print(cost)
     # 32 1
 
     sum_cost = fluid.layers.reduce_sum(cost)

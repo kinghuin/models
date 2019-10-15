@@ -43,7 +43,7 @@ SAVED_FILE_NAME = "data.tar.gz"
 DATA_DIR_NAME = "data"
 TRAIN_DATA_DIR_NAME = "train_images"
 TEST_DATA_DIR_NAME = "test_images"
-TRAIN_LIST_FILE_NAME = "train.list"
+TRAIN_LIST_FILE_NAME = "debug.list"
 TEST_LIST_FILE_NAME = "test.list"
 
 
