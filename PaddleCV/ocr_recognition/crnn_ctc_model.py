@@ -258,7 +258,7 @@ def ctc_train_net(args, data_shape, num_classes):
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int64', lod_level=0)
     # fluid.layers.Print(images)
-    fluid.layers.Print(label)
+    # fluid.layers.Print(label)
     # fluid.layers.Print(label_length)
     # fluid.layers.Print(seq_length)
     batch_size=args.batch_size
@@ -279,13 +279,13 @@ def ctc_train_net(args, data_shape, num_classes):
         label_length=label_length)
     # print("cost",cost)
     # 384 1
-    fluid.layers.Print(cost)
+    # fluid.layers.Print(cost)
     # 32 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=label_length)
-    fluid.layers.Print(decoded_out)
+    # fluid.layers.Print(decoded_out)
     # print("decoded_out",decoded_out)
     # -1 48
     # 32 48
