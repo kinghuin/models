@@ -37,7 +37,7 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
         # print(input)
         # print(label)
         # fluid.layers.Print(input,summarize=5)
-        # fluid.layers.Print(label,summarize=5)
+        fluid.layers.Print(label,summarize=5)
         squeeze_label=fluid.layers.squeeze(label, axes=[-1])
         # print(squeeze_label)
         distances, seq_num = fluid.layers.edit_distance(
@@ -178,7 +178,7 @@ def encoder_net(images,
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
     # fluid.layers.Print(reshape_sliced_feature)
-    #-1 384 768
+    #-1 48 768
     print(reshape_sliced_feature)
 
     para_attr = fluid.ParamAttr(
@@ -200,7 +200,7 @@ def encoder_net(images,
                            param_attr=para_attr,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
-    #-1 384 600
+    #-1 48 600
     # print(fc_1)
 
     fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
@@ -209,7 +209,7 @@ def encoder_net(images,
                            bias_attr=bias_attr_nobias,
                            num_flatten_dims=2)
     # print(fc_2)
-    #-1 384 600
+    #-1 48 600
 
 
     gru_cell = fluid.layers.rnn.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
@@ -272,7 +272,7 @@ def ctc_train_net(args, data_shape, num_classes):
         use_cudnn=True if args.use_gpu else False,
     )
     fc_out_t=fluid.layers.transpose(fc_out,perm=[1,0,2])
-    # 384 -1 96
+    # 48 -1 96
 
     cost = fluid.layers.warpctc(
         input=fc_out_t, label=label, blank=num_classes, norm_by_times=True, input_length=seq_length,
@@ -280,12 +280,15 @@ def ctc_train_net(args, data_shape, num_classes):
     # print("cost",cost)
     # 384 1
     fluid.layers.Print(cost)
+    # 32 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=label_length)
     fluid.layers.Print(decoded_out)
-    #
+    # print("decoded_out",decoded_out)
+    # -1 48
+    # 32 48
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
 
