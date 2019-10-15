@@ -124,6 +124,7 @@ def train(args):
 
     def train_one_batch(data):
         var_names = [var.name for var in fetch_vars]
+        profiler.start_profiler("All")
         if args.parallel:
             results = train_exe.run(var_names,
                                     feed=get_feeder_data(data, place))
@@ -132,6 +133,7 @@ def train(args):
             results = train_exe.run(feed=get_feeder_data(data, place),
                                     fetch_list=fetch_vars)
             results = [result[0] for result in results]
+        profiler.stop_profiler("total", "tmp/profile")
         return results
 
     def test(iter_num):
@@ -156,7 +158,6 @@ def train(args):
     iter_num = 0
     stop = False
     start_time = time.time()
-    profiler.start_profiler("All")
     while not stop:
         total_loss = 0.0
         total_seq_error = 0.0
