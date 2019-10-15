@@ -101,64 +101,12 @@ def get_ctc_feeder_data(data, place, need_label=True):
     label_tensor= np.array(list(map(lambda x: x[1],data))).astype('int32')
     seq_length_tensor=np.array(list(map(lambda x: x[2],data))).astype('int64')
     label_length_tensor=np.array(list(map(lambda x: x[3],data))).astype('int64')
-    # print(label_tensor)
-    # seq_length_tensor = fluid.LoDTensor()
-    # seq_length_tensor.set(list(map(lambda x: x[2], data)), place)
-    # label_length_tensor = fluid.LoDTensor()
-    # label_length_tensor.set(list(map(lambda x: x[3], data)), place)
-
-    # label_tensor = to_lodtensor(list(map(lambda x: x[1], data)), place)
-    # seq_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
-    # label_length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
-
-    # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
-    # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
-    # label_tensor = fluid.LoDTensor()
-    # label_tensor.set(list(map(lambda x: x[1], data)), place)
-
-    # print("pixel_data")
-    # print(pixel_data)
-    # print("label")
-    # print(list(map(lambda x: x[1], data)))
-    # print("seq_length")
-    # print(list(map(lambda x: x[2], data)))
-    # print("label_length")
-    # print(list(map(lambda x: x[3], data)))
-    # print(pixel_tensor.dim)
-    # print(label_tensor.dim)
-    # print(img_length_tensor.dim)
-    # print(length_tensor.dim)
-
-    # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
-    # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
 
     if need_label:
         return {"pixel": pixel_tensor, "label": label_tensor, "seq_length":seq_length_tensor, "label_length":label_length_tensor }
     else:
         return {"pixel": pixel_tensor, "seq_length":seq_length_tensor}
 
-    # pixel_data = np.concatenate(
-    #     list(map(lambda x: x[0][np.newaxis, :], data)),
-    #     axis=0).astype("float32")
-    # label = np.concatenate(list(map(lambda x: x[1], data)),axis=0).astype("int32")
-    # img_length = list(map(lambda x: x[2], data))
-    #
-    # # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
-    # # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
-    # # label_tensor = fluid.LoDTensor()
-    # # label_tensor.set(list(map(lambda x: x[1], data)), place)
-    # img_length_tensor = fluid.LoDTensor()
-    # img_length_tensor.set(list(map(lambda x: x[2], data)), place)
-    # length_tensor=fluid.LoDTensor()
-    # img_length_tensor.set(list(map(lambda x: x[3], data)), place)
-    #
-    # # img_length_tensor = to_lodtensor(list(map(lambda x: x[2], data)), place)
-    # # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
-    #
-    # if need_label:
-    #     return {"pixel": pixel_tensor, "label": label_tensor, "img_length":img_length_tensor, "length":length_tensor }
-    # else:
-    #     return {"pixel": pixel_tensor, "length":length_tensor}
 
 
 def get_ctc_feeder_for_infer(data, place):

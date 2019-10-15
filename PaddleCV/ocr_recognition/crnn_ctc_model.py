@@ -173,8 +173,6 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
-    # fluid.layers.Print(sliced_feature)
-    # -1 768
 
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
     # fluid.layers.Print(reshape_sliced_feature)
@@ -216,11 +214,11 @@ def encoder_net(images,
 
     gru_forward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
     # print(gru_forward)
-    # -1 384 200
+    # -1 48 200
 
     gru_backward, _ = fluid.layers.rnn.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
     # print(gru_backward)
-    # -1 384 200
+    # -1 48 200
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -237,7 +235,7 @@ def encoder_net(images,
                              bias_attr=b_attr,
                              num_flatten_dims=2)
     # print(fc_out)
-    # -1 384 96
+    # -1 48 96
 
     return fc_out
 
@@ -273,13 +271,13 @@ def ctc_train_net(args, data_shape, num_classes):
     )
     fc_out_t=fluid.layers.transpose(fc_out,perm=[1,0,2])
     # fc_out_t=fluid.layers.reshape(fc_out,[fc_out.shape[1],-1,fc_out.shape[2]])
-    # 48 -1 96
+
 
     cost = fluid.layers.warpctc(
         input=fc_out_t, label=label, blank=num_classes, norm_by_times=True, input_length=seq_length,
         label_length=label_length)
     # print("cost",cost)
-    # 384 1
+    # 48 1
     # fluid.layers.Print(cost)
     # 32 1
 
