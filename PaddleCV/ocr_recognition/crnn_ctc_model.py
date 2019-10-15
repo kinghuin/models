@@ -37,11 +37,11 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
         # print(input)
         # print(label)
         # fluid.layers.Print(input,summarize=5)
-        fluid.layers.Print(label,summarize=5)
-        squeeze_label=fluid.layers.squeeze(label, axes=[-1])
+        # fluid.layers.Print(label,summarize=5)
+        # squeeze_label=fluid.layers.squeeze(label, axes=[-1])
         # print(squeeze_label)
         distances, seq_num = fluid.layers.edit_distance(
-            input=input, label=squeeze_label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
+            input=input, label=label, ignored_tokens=ignored_tokens, input_length=input_length, label_length=label_length)
 
         zero = fluid.layers.fill_constant(shape=[1], value=0.0, dtype='float32')
         compare_result = fluid.layers.equal(distances, zero)
@@ -252,7 +252,7 @@ def ctc_train_net(args, data_shape, num_classes):
 
     images = fluid.layers.data(name='pixel', shape=data_shape, dtype='float32',lod_level=0)
     label = fluid.layers.data(
-        name='label', shape=[-1,MAX_LABEL_LENGTH,1], dtype='int32', lod_level=0)
+        name='label', shape=[-1,MAX_LABEL_LENGTH], dtype='int32', lod_level=0)
     label_length = fluid.layers.data(
         name='label_length', shape=[-1], dtype='int64', lod_level=0)
     seq_length=fluid.layers.data(
