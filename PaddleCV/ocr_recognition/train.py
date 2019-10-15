@@ -28,7 +28,7 @@ import sys
 import time
 import os
 import numpy as np
-from paddle.fluid import profiler
+
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -124,7 +124,6 @@ def train(args):
 
     def train_one_batch(data):
         var_names = [var.name for var in fetch_vars]
-        profiler.start_profiler("All")
         if args.parallel:
             results = train_exe.run(var_names,
                                     feed=get_feeder_data(data, place))
@@ -133,7 +132,6 @@ def train(args):
             results = train_exe.run(feed=get_feeder_data(data, place),
                                     fetch_list=fetch_vars)
             results = [result[0] for result in results]
-        profiler.stop_profiler("total", "tmp/profile")
         return results
 
     def test(iter_num):
