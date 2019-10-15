@@ -97,10 +97,7 @@ def get_ctc_feeder_data(data, place, need_label=True):
     # label_length = np.array(list(map(lambda x: x[3], data))).astype('int64')
     # label_length_tensor = fluid.LoDTensor().set(label_length, place)
 
-    pixel_tensor = np.array(list(map(lambda x: x[0],data))).astype("float32")
-    label_tensor= np.array(list(map(lambda x: x[1],data))).astype('int32')
-    seq_length_tensor=np.array(list(map(lambda x: x[2],data))).astype('int64')
-    label_length_tensor=np.array(list(map(lambda x: x[3],data))).astype('int64')
+
     # print(label_tensor)
     # seq_length_tensor = fluid.LoDTensor()
     # seq_length_tensor.set(list(map(lambda x: x[2], data)), place)
@@ -133,8 +130,14 @@ def get_ctc_feeder_data(data, place, need_label=True):
     # length_tensor = to_lodtensor(list(map(lambda x: x[3], data)), place)
 
     if need_label:
+        pixel_tensor = np.array(list(map(lambda x: x[0], data))).astype("float32")
+        label_tensor = np.array(list(map(lambda x: x[1], data))).astype('int32')
+        seq_length_tensor = np.array(list(map(lambda x: x[2], data))).astype('int64')
+        label_length_tensor = np.array(list(map(lambda x: x[3], data))).astype('int64')
         return {"pixel": pixel_tensor, "label": label_tensor, "seq_length":seq_length_tensor, "label_length":label_length_tensor }
     else:
+        pixel_tensor = np.array(list(map(lambda x: x[0], data))).astype("float32")
+        label_length_tensor = np.array(list(map(lambda x: x[2], data))).astype('int64')
         return {"pixel": pixel_tensor, "length":label_length_tensor}
 
     # pixel_data = np.concatenate(

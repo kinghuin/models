@@ -271,7 +271,8 @@ def ctc_train_net(args, data_shape, num_classes):
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
-    fc_out_t=fluid.layers.transpose(fc_out,perm=[1,0,2])
+    # fc_out_t=fluid.layers.transpose(fc_out,perm=[1,0,2])
+    fc_out_t=fluid.layers.reshape(fc_out,[fc_out.shape[1],-1,fc_out.shape[2]])
     # 48 -1 96
 
     cost = fluid.layers.warpctc(
