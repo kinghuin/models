@@ -274,7 +274,7 @@ def ctc_train_net(args, data_shape, num_classes):
     # print("fc_out",fc_out)
     # -1 384 96
 
-    fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
+    # fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
     # print("fc_out_t",fc_out_t)
     # 384 -1 96
     # casted_fc_out=fluid.layers.cast(x=fc_out, dtype='float32')

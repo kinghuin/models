@@ -28,6 +28,7 @@ import sys
 import time
 import os
 import numpy as np
+from paddle.fluid import profiler
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -155,6 +156,7 @@ def train(args):
     iter_num = 0
     stop = False
     start_time = time.time()
+    profiler.start_profiler("All")
     while not stop:
         total_loss = 0.0
         total_seq_error = 0.0
