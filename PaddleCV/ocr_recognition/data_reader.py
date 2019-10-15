@@ -32,9 +32,7 @@ except NameError:
 SOS = 0
 EOS = 1
 NUM_CLASSES = 95
-DATA_SHAPE = [1, 48, 512]
-MAX_LABEL_LENGTH=23
-SEQ_LENGTH = 48
+DATA_SHAPE = [1, 48, None]
 
 DATA_MD5 = "7256b1d5420d8c3e74815196e58cdad5"
 DATA_URL = "http://paddle-ocr-data.bj.bcebos.com/data.tar.gz"
@@ -43,7 +41,7 @@ SAVED_FILE_NAME = "data.tar.gz"
 DATA_DIR_NAME = "data"
 TRAIN_DATA_DIR_NAME = "train_images"
 TEST_DATA_DIR_NAME = "test_images"
-TRAIN_LIST_FILE_NAME = "train.list"
+TRAIN_LIST_FILE_NAME = "debug.list"
 TEST_LIST_FILE_NAME = "test.list"
 
 
@@ -137,9 +135,6 @@ class DataGenerator(object):
                         items = line.split(' ')
 
                         label = [int(c) for c in items[-1].split(',')]
-                        label_length = len(label)
-                        pad = [0] * (MAX_LABEL_LENGTH - label_length)
-                        label = label + pad
                         img = Image.open(os.path.join(img_root_dir, items[
                             2])).convert('L')
                         if j == 0:
@@ -147,11 +142,10 @@ class DataGenerator(object):
                         img = img.resize((sz[0], DATA_SHAPE[1]))
                         img = np.array(img) - 127.5
                         img = img[np.newaxis, ...]
-                        # sequence_length =
                         if self.model == "crnn_ctc":
-                            result.append([img, label, SEQ_LENGTH, label_length])
+                            result.append([img, label])
                         else:
-                            result.append([img, [SOS] + label, label + [EOS]])  # We did not implement attention-model
+                            result.append([img, [SOS] + label, label + [EOS]])
                     yield result
                 if not cycle:
                     break
@@ -175,19 +169,14 @@ class DataGenerator(object):
                 items = line.split(' ')
 
                 label = [int(c) for c in items[-1].split(',')]
-                label_length = len(label)
-                pad = [0] * (MAX_LABEL_LENGTH - label_length)
-                label = label + pad
                 img = Image.open(os.path.join(img_root_dir, items[2])).convert(
                     'L')
 
                 img = img.resize((img.size[0], DATA_SHAPE[1])) # resize height
                 img = np.array(img) - 127.5
                 img = img[np.newaxis, ...]
-
-
                 if self.model == "crnn_ctc":
-                    yield img, label,SEQ_LENGTH,label_length
+                    yield img, label
                 else:
                     yield img, [SOS] + label, label + [EOS]
 
@@ -224,20 +213,17 @@ class DataGenerator(object):
                     img = np.array(img) - 127.5
                     img = img[np.newaxis, ...]
                     label = [int(c) for c in line.split(' ')[3].split(',')]
-                    label_length = len(label)
-                    pad = [0] * (MAX_LABEL_LENGTH - label_length)
-                    label = label + pad
-                    yield img, label, SEQ_LENGTH, label_length
+                    yield img, label
 
             if img_label_list is not None:
                 lines = []
                 with open(img_label_list) as f:
                     lines = f.readlines()
-                for img, label, SEQ_LENGTH, label_length in yield_img_and_label(lines):
-                    yield img, label, SEQ_LENGTH, label_length
+                for img, label in yield_img_and_label(lines):
+                    yield img, label
                 while cycle:
-                    for img, label, SEQ_LENGTH, label_length in yield_img_and_label(lines):
-                        yield img, label, SEQ_LENGTH, label_length
+                    for img, label in yield_img_and_label(lines):
+                        yield img, label
             else:
                 while True:
                     img_path = input("Please input the path of image: ")
@@ -245,8 +231,7 @@ class DataGenerator(object):
                     img = img.resize((img.size[0], DATA_SHAPE[1])) # resize height
                     img = np.array(img) - 127.5
                     img = img[np.newaxis, ...]
-                    global SEQ_LENGTH
-                    yield img, [[0]], SEQ_LENGTH, 1
+                    yield img, [[0]]
 
         return reader
 

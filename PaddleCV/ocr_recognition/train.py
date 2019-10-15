@@ -29,7 +29,6 @@ import time
 import os
 import numpy as np
 
-
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
 # yapf: disable
@@ -56,7 +55,7 @@ add_arg('use_gpu',           bool,    True,      "Whether use GPU to train.")
 add_arg('min_average_window',int,     10000,     "Min average window.")
 add_arg('max_average_window',int,     12500,     "Max average window. It is proposed to be set as the number of minibatch in a pass.")
 add_arg('average_window',    float,   0.15,      "Average window.")
-add_arg('parallel',          bool,    True,     "Whether use parallel training.")
+add_arg('parallel',          bool,    False,     "Whether use parallel training.")
 add_arg('profile',           bool,    False,      "Whether to use profiling.")
 add_arg('skip_batch_num',    int,     0,          "The number of first minibatches to skip as warm-up for better performance test.")
 add_arg('skip_test',         bool,    False,      "Whether to skip test phase.")
@@ -103,7 +102,12 @@ def train(args):
         fluid.default_startup_program().random_seed = 90
 
     exe.run(fluid.default_startup_program())
-
+    for block in fluid.default_main_program().blocks:
+        for param in block.all_parameters():
+            print("reset: {}".format(param.name))
+            t = fluid.global_scope().find_var(param.name).get_tensor()
+            shape = t.shape()
+            t.set(np.ones(shape).astype("float32"), place)
     # load init model
     if args.init_model is not None:
         model_dir = args.init_model
