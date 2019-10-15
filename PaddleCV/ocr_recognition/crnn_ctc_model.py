@@ -257,10 +257,10 @@ def ctc_train_net(args, data_shape, num_classes):
         name='label_length', shape=[-1], dtype='int64', lod_level=0)
     seq_length=fluid.layers.data(
         name='seq_length', shape=[-1], dtype='int64', lod_level=0)
-    fluid.layers.Print(images)
-    fluid.layers.Print(label)
-    fluid.layers.Print(label_length)
-    fluid.layers.Print(seq_length)
+    # fluid.layers.Print(images)
+    # fluid.layers.Print(label)
+    # fluid.layers.Print(label_length)
+    # fluid.layers.Print(seq_length)
     batch_size=args.batch_size
 
     fc_out = encoder_net(
@@ -271,38 +271,21 @@ def ctc_train_net(args, data_shape, num_classes):
         regularizer=regularizer,
         use_cudnn=True if args.use_gpu else False,
     )
-    # print("fc_out",fc_out)
-    # -1 384 96
-
-    # fc_out_t=fluid.layers.transpose(fc_out, perm=[1,0,2])
-    # print("fc_out_t",fc_out_t)
+    fc_out_t=fluid.layers.transpose(fc_out,perm=[1,0,2])
     # 384 -1 96
-    # casted_fc_out=fluid.layers.cast(x=fc_out, dtype='float32')
-    # casted_label=fluid.layers.cast(x=label, dtype='int32')
-    # casted_seq_length = fluid.layers.cast(x=seq_length, dtype='int64')
-    # casted_label_length = fluid.layers.cast(x=label_length, dtype='int64')
-    # fluid.layers.Print(fc_out)
-    # fluid.layers.Print(casted_fc_out)
-    # fluid.layers.Print(label)
-    # fluid.layers.Print(casted_label)
-    # fluid.layers.Print(num_classes)
-    # fluid.layers.Print(seq_length)
-    # fluid.layers.Print(casted_seq_length)
-    # fluid.layers.Print(label_length)
-    # fluid.layers.Print(casted_label_length)
-    # cost = fluid.layers.warpctc(
-    #     input=casted_fc_out, label=casted_label, blank=num_classes, norm_by_times=True,input_length=casted_seq_length,label_length=casted_label_length)
+
     cost = fluid.layers.warpctc(
-        input=fc_out, label=label, blank=num_classes, norm_by_times=True, input_length=seq_length,
+        input=fc_out_t, label=label, blank=num_classes, norm_by_times=True, input_length=seq_length,
         label_length=label_length)
     # print("cost",cost)
     # 384 1
+    fluid.layers.Print(cost)
 
     sum_cost = fluid.layers.reduce_sum(cost)
     decoded_out, decoded_len = fluid.layers.ctc_greedy_decoder(
         input=fc_out, blank=num_classes,input_length=label_length)
-    # print("decoded_out",decoded_out)
-    # -1 384
+    fluid.layers.Print(decoded_out)
+    #
 
     casted_label = fluid.layers.cast(x=label, dtype='int64')
 
