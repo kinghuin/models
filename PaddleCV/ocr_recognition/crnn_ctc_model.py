@@ -128,7 +128,7 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[conv_features.shape[2], 1])
-    fluid.layers.Print(sliced_feature, summarize=100, message="sliced_feature")
+    # fluid.layers.Print(sliced_feature, summarize=100, message="sliced_feature")
     para_attr = fluid.ParamAttr(
         regularizer=regularizer,
         gradient_clip=gradient_clip,
@@ -146,29 +146,31 @@ def encoder_net(images,
     fc_1 = fluid.layers.fc(input=sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
-                           bias_attr=bias_attr_nobias)
-    fluid.layers.Print(fc_1, summarize=100, message="fc_1")
+                           bias_attr=None)
+    # fluid.layers.Print(fc_1, summarize=100, message="fc_1")
     fc_2 = fluid.layers.fc(input=sliced_feature,
                            size=rnn_hidden_size * 3,
                            param_attr=para_attr,
-                           bias_attr=bias_attr_nobias)
-    fluid.layers.Print(fc_2, summarize=100, message="fc_2")
+                           bias_attr=None)
+    # fluid.layers.Print(fc_2, summarize=100, message="fc_2")
 
     gru_forward = fluid.layers.dynamic_gru(
         input=fc_1,
         size=rnn_hidden_size,
         param_attr=para_attr,
         bias_attr=bias_attr,
-        candidate_activation='relu')
+        candidate_activation='relu',
+        origin_mode=True)
     gru_backward = fluid.layers.dynamic_gru(
         input=fc_2,
         size=rnn_hidden_size,
         is_reverse=True,
         param_attr=para_attr,
         bias_attr=bias_attr,
-        candidate_activation='relu')
+        candidate_activation='relu',
+        origin_mode=True)
 
-    fluid.layers.Print(gru_forward, summarize=100, message="gru_forward")
+    # fluid.layers.Print(gru_forward, summarize=100, message="gru_forward")
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
         gradient_clip=gradient_clip,
@@ -204,7 +206,7 @@ def ctc_train_net(args, data_shape, num_classes):
     cost = fluid.layers.warpctc(
         input=fc_out, label=label, blank=num_classes, norm_by_times=True)
 
-    fluid.layers.Print(cost)
+    # fluid.layers.Print(cost)
     sum_cost = fluid.layers.reduce_sum(cost)
 
     decoded_out = fluid.layers.ctc_greedy_decoder(
