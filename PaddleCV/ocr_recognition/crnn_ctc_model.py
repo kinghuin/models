@@ -60,6 +60,28 @@ class padding_edit_distance(fluid.evaluator.EditDistance):
         self.metrics.append(total_distance)
         self.metrics.append(instance_error_count)
 
+class myGRUUnit(fluid.layers.GRUCell):
+    def forward(self, input, pre_hidden):
+        concat_input_hidden = fluid.layers.concat([input, pre_hidden], 1)
+
+        gate_input = fluid.layers.matmul(x=concat_input_hidden, y=self._gate_weight)
+
+        gate_input = fluid.layers.elementwise_add(gate_input, self._gate_bias)
+
+        gate_input = self._gate_activation(gate_input)
+        r, u = fluid.layers.split(gate_input, num_or_sections=2, dim=1)
+
+        r_hidden = r * pre_hidden
+
+        candidate = fluid.layers.matmul(
+            fluid.layers.concat([input, r_hidden], 1), self._candidate_weight)
+        candidate = fluid.layers.elementwise_add(candidate, self._candidate_bias)
+
+        c = self._activation(candidate)
+        new_hidden = u * c + (1 - u) * pre_hidden
+
+        return new_hidden
+
 
 def conv_bn_pool(input,
                  group,
@@ -174,8 +196,8 @@ def encoder_net(images,
         input=conv_features,
         stride=[1, 1],
         filter_size=[H, 1])
-    print("sliced_feature: {}".format(sliced_feature.name))
-    fluid.layers.Print(sliced_feature, summarize=100, message="sliced_feature")
+    # print("sliced_feature: {}".format(sliced_feature.name))
+    # fluid.layers.Print(sliced_feature, summarize=100, message="sliced_feature")
     reshape_sliced_feature=fluid.layers.reshape(sliced_feature,shape=[-1, 48, sliced_feature.shape[-1]])
     # fluid.layers.Print(reshape_sliced_feature)
     #-1 48 768
@@ -195,35 +217,35 @@ def encoder_net(images,
         gradient_clip=gradient_clip,
         initializer=fluid.initializer.Normal(0.0, 0.02))
 
-    fc_1 = fluid.layers.fc(input=reshape_sliced_feature,
-                           size=rnn_hidden_size * 3,
-                           param_attr=para_attr,
-                           bias_attr=bias_attr_nobias,
-                           num_flatten_dims=2)
+    # fc_1 = fluid.layers.fc(input=reshape_sliced_feature,
+    #                        size=rnn_hidden_size * 3,
+    #                        param_attr=para_attr,
+    #                        bias_attr=bias_attr_nobias,
+    #                        num_flatten_dims=2)
     #-1 48 600
     # print(fc_1)
-    fluid.layers.Print(fc_1, summarize=100, message="fc_1")
-    fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
-                           size=rnn_hidden_size * 3,
-                           param_attr=para_attr,
-                           bias_attr=bias_attr_nobias,
-                           num_flatten_dims=2)
+    # fluid.layers.Print(fc_1, summarize=100, message="fc_1")
+    # fc_2 = fluid.layers.fc(input=reshape_sliced_feature,
+    #                        size=rnn_hidden_size * 3,
+    #                        param_attr=para_attr,
+    #                        bias_attr=bias_attr_nobias,
+    #                        num_flatten_dims=2)
     # print(fc_2)
     #-1 48 600
-    fluid.layers.Print(fc_2, summarize=100, message="fc_2")
+    # fluid.layers.Print(fc_2, summarize=100, message="fc_2")
 
     gru_cell = fluid.layers.GRUCell(hidden_size=rnn_hidden_size, param_attr=para_attr,bias_attr=bias_attr,activation=fluid.layers.relu)
 
-    gru_forward, _ = fluid.layers.rnn(cell=gru_cell, inputs=fc_1, sequence_length=seq_length)
+    gru_forward, _ = fluid.layers.rnn(cell=gru_cell, inputs=reshape_sliced_feature, sequence_length=seq_length)
     # print(gru_forward)
     # -1 48 200
 
-    gru_backward, _ = fluid.layers.rnn(cell=gru_cell, inputs=fc_2, sequence_length=seq_length,is_reverse=True)
+    gru_backward, _ = fluid.layers.rnn(cell=gru_cell, inputs=reshape_sliced_feature, sequence_length=seq_length,is_reverse=True)
     # print(gru_backward)
     # -1 48 200
 
     print("gru_forward: {}".format(gru_forward.name))
-    fluid.layers.Print(gru_forward, summarize=100, message="gru_forward")
+    # fluid.layers.Print(gru_forward, summarize=100, message="gru_forward")
 
     w_attr = fluid.ParamAttr(
         regularizer=regularizer,
@@ -283,7 +305,7 @@ def ctc_train_net(args, data_shape, num_classes):
         label_length=label_length)
     # print("cost",cost)
     # 48 1
-    fluid.layers.Print(cost)
+    # fluid.layers.Print(cost)
     # 32 1
 
     sum_cost = fluid.layers.reduce_sum(cost)
