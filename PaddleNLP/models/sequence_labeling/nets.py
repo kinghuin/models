@@ -32,15 +32,15 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
         """
         define the bidirectional gru layer
         """
-        pre_gru = fluid.layers.fc(
-            input=input_feature,
-            size=grnn_hidden_dim * 3,
-            param_attr=fluid.ParamAttr(
-                initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
-                regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)),
-            num_flatten_dims=2)
+        # pre_gru = fluid.layers.fc(
+        #     input=input_feature,
+        #     size=grnn_hidden_dim * 3,
+        #     param_attr=fluid.ParamAttr(
+        #         initializer=fluid.initializer.Uniform(
+        #             low=-init_bound, high=init_bound),
+        #         regularizer=fluid.regularizer.L2DecayRegularizer(
+        #             regularization_coeff=1e-4)),
+        #     num_flatten_dims=2)
 
         gru_cell = fluid.layers.GRUCell(hidden_size=grnn_hidden_dim,param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
@@ -48,18 +48,18 @@ def lex_net(word, length, args, vocab_size, num_labels, for_infer = True, target
                 regularizer=fluid.regularizer.L2DecayRegularizer(
                     regularization_coeff=1e-4)))
 
-        gru,_ = fluid.layers.rnn(cell=gru_cell, inputs=pre_gru, sequence_length=length)
+        gru,_ = fluid.layers.rnn(cell=gru_cell, inputs=input_feature, sequence_length=length)
 
-        pre_gru_r = fluid.layers.fc(
-            input=input_feature,
-            size=grnn_hidden_dim * 3,
-            param_attr=fluid.ParamAttr(
-                initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
-                regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)),
-            num_flatten_dims=2)
-        gru_r,_ = fluid.layers.rnn(cell=gru_cell, inputs=pre_gru_r, sequence_length=length,is_reverse=True)
+        # pre_gru_r = fluid.layers.fc(
+        #     input=input_feature,
+        #     size=grnn_hidden_dim * 3,
+        #     param_attr=fluid.ParamAttr(
+        #         initializer=fluid.initializer.Uniform(
+        #             low=-init_bound, high=init_bound),
+        #         regularizer=fluid.regularizer.L2DecayRegularizer(
+        #             regularization_coeff=1e-4)),
+        #     num_flatten_dims=2)
+        gru_r,_ = fluid.layers.rnn(cell=gru_cell, inputs=input_feature, sequence_length=length,is_reverse=True)
 
         bi_merge = fluid.layers.concat(input=[gru, gru_r], axis=2)
         return bi_merge
