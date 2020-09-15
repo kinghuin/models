@@ -18,7 +18,6 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
-import paddle.fluid as fluid
 import yaml
 import io
 
@@ -130,48 +129,3 @@ def parse_padding_result(words, crf_decode, seq_lens, dataset):
 
         batch_out.append([sent_out, tags_out])
     return batch_out
-
-
-def init_checkpoint(exe, init_checkpoint_path, main_program):
-    """
-    Init CheckPoint
-    """
-    assert os.path.exists(
-        init_checkpoint_path), "[%s] cann't be found." % init_checkpoint_path
-
-    def existed_persitables(var):
-        """
-        If existed presitabels
-        """
-        if not fluid.io.is_persistable(var):
-            return False
-        return os.path.exists(os.path.join(init_checkpoint_path, var.name))
-
-    fluid.io.load_vars(
-        exe,
-        init_checkpoint_path,
-        main_program=main_program,
-        predicate=existed_persitables)
-    print("Load model from {}".format(init_checkpoint_path))
-
-
-def init_pretraining_params(exe,
-                            pretraining_params_path,
-                            main_program,
-                            use_fp16=False):
-    """load params of pretrained model, NOT including moment, learning_rate"""
-    assert os.path.exists(pretraining_params_path
-                          ), "[%s] cann't be found." % pretraining_params_path
-
-    def _existed_params(var):
-        if not isinstance(var, fluid.framework.Parameter):
-            return False
-        return os.path.exists(os.path.join(pretraining_params_path, var.name))
-
-    fluid.io.load_vars(
-        exe,
-        pretraining_params_path,
-        main_program=main_program,
-        predicate=_existed_params)
-    print("Load pretraining parameters from {}.".format(
-        pretraining_params_path))

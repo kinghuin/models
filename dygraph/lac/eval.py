@@ -18,7 +18,6 @@ import os
 import time
 import sys
 
-import paddle.fluid as fluid
 import paddle
 import utils
 import reader
@@ -32,49 +31,48 @@ def do_eval(args):
     dataset = reader.Dataset(args)
 
     if args.use_cuda: 
-        place = fluid.CUDAPlace(fluid.dygraph.parallel.Env().dev_id) \
-        if args.use_data_parallel else fluid.CUDAPlace(0)
+        place = paddle.CUDAPlace(paddle.parallel.Env().dev_id) \
+        if args.use_data_parallel else paddle.CUDAPlace(0)
     else:
-        place = fluid.CPUPlace()
+        place = paddle.CPUPlace()
+    
+    paddle.disable_static(place)
+    test_loader = reader.create_dataloader(
+        args,
+        file_name=args.test_data,
+        place=place,
+        reader=dataset,
+        mode='test')
+    model = lex_net(args, dataset.vocab_size, dataset.num_labels)
+    load_path = args.init_checkpoint
+    state_dict, _ = paddle.load(load_path)
+    #import ipdb; ipdb.set_trace()
+    state_dict["linear_chain_crf.weight"]=state_dict["crf_decoding.weight"]
+    model.set_dict(state_dict)
+    model.eval()
+    chunk_eval = Chunk_eval(int(math.ceil((dataset.num_labels - 1) / 2.0)), "IOB")
+    chunk_evaluator = paddle.metric.ChunkEvaluator()
+    chunk_evaluator.reset()
+    # test_process(test_loader, chunk_evaluator)
+    
+    def test_process(reader, chunk_evaluator):
+        start_time = time.time()
+        for batch in reader():
+            words, targets, length = batch
+            crf_decode = model(words, length=length)
+            (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
+                num_correct_chunks) = chunk_eval(
+                    input=crf_decode,
+                    label=targets,
+                    seq_length=length)
+            chunk_evaluator.update(num_infer_chunks.numpy(), num_label_chunks.numpy(), num_correct_chunks.numpy())
         
-    with fluid.dygraph.guard(place):
-        test_loader = reader.create_dataloader(
-            args,
-            file_name=args.test_data,
-            place=place,
-            model='lac',
-            reader=dataset,
-            mode='test')
-        model = lex_net(args, dataset.vocab_size, dataset.num_labels)
-        load_path = args.init_checkpoint
-        state_dict, _ = fluid.dygraph.load_dygraph(load_path)
-        #import ipdb; ipdb.set_trace()
-        state_dict["linear_chain_crf.weight"]=state_dict["crf_decoding.weight"]
-        model.set_dict(state_dict)
-        model.eval()
-        chunk_eval = Chunk_eval(int(math.ceil((dataset.num_labels - 1) / 2.0)), "IOB")
-        chunk_evaluator = fluid.metrics.ChunkEvaluator()
-        chunk_evaluator.reset()
-        # test_process(test_loader, chunk_evaluator)
-		
-        def test_process(reader, chunk_evaluator):
-            start_time = time.time()
-            for batch in reader():
-                words, targets, length = batch
-                crf_decode = model(words, length=length)
-                (precision, recall, f1_score, num_infer_chunks, num_label_chunks,
-                    num_correct_chunks) = chunk_eval(
-                        input=crf_decode,
-                        label=targets,
-                        seq_length=length)
-                chunk_evaluator.update(num_infer_chunks.numpy(), num_label_chunks.numpy(), num_correct_chunks.numpy())
-            
-            precision, recall, f1 = chunk_evaluator.eval()
-            end_time = time.time()
-            print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s" %
-                (precision, recall, f1, end_time - start_time))
+        precision, recall, f1 = chunk_evaluator.eval()
+        end_time = time.time()
+        print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s" %
+            (precision, recall, f1, end_time - start_time))
 
-        test_process(test_loader, chunk_evaluator)
+    test_process(test_loader, chunk_evaluator)
 
 if __name__ == '__main__':
     args = parser.parse_args()

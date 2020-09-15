@@ -18,34 +18,30 @@ import sys
 import os
 import math
 import numpy as np
+import six
 
-import paddle.fluid as fluid
-from paddle.fluid.initializer import NormalInitializer
-from paddle.fluid.dygraph import to_variable
-from paddle.fluid.dygraph.nn import Embedding, Linear, GRUUnit
+import paddle
 
-class DynamicGRU(fluid.dygraph.Layer):
+class DynamicGRU(paddle.nn.Layer):
     def __init__(self,
-                 size,
+                 input_size,
+                 hidden_size,
                  h_0=None,
                  param_attr=None,
                  bias_attr=None,
                  is_reverse=False,
-                 gate_activation='sigmoid',
-                 candidate_activation='tanh',
-                 origin_mode=False,
                  init_size = None):
         super(DynamicGRU, self).__init__()
 
-        self.gru_unit = GRUUnit(
-            size * 3,
-            param_attr=param_attr,
-            bias_attr=bias_attr,
-            activation=candidate_activation,
-            gate_activation=gate_activation,
-            origin_mode=origin_mode)
+        self.gru_unit =  paddle.nn.GRUCell(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            weight_ih_attr=param_attr,
+            weight_hh_attr=param_attr,
+            bias_ih_attr=bias_attr,
+            bias_hh_attr=bias_attr,
+            )
 
-        self.size = size
         self.h_0 = h_0
         self.is_reverse = is_reverse
 
@@ -59,18 +55,18 @@ class DynamicGRU(fluid.dygraph.Layer):
                 i = inputs.shape[1] - 1 - i
 
             input_ = inputs[ :, i:i+1, :]
-            input_ = fluid.layers.reshape(input_, [-1, input_.shape[2]], inplace=False)
-            hidden, reset, gate = self.gru_unit(input_, hidden)
-            hidden_ = fluid.layers.reshape(hidden, [-1, 1, hidden.shape[1]], inplace=False)
+            input_ = paddle.reshape(input_, [-1, input_.shape[2]])
+            hidden, hidden = self.gru_unit(input_, hidden)
+            hidden_ = paddle.reshape(hidden, [-1, 1, hidden.shape[1]])
             res.append(hidden_)
 
         if self.is_reverse:
             res = res[::-1]
-        res = fluid.layers.concat(res, axis=1)
+        res = paddle.concat(res, axis=1)
         return res
 
 
-class BiGRU(fluid.dygraph.Layer):
+class BiGRU(paddle.nn.Layer):
     def __init__(self,
                  input_dim,
                  grnn_hidden_dim,
@@ -78,52 +74,36 @@ class BiGRU(fluid.dygraph.Layer):
                  h_0=None):
         super(BiGRU, self).__init__()
 
-        self.pre_gru = Linear(input_dim=input_dim,
-                            output_dim=grnn_hidden_dim * 3,
-                            param_attr=fluid.ParamAttr(
-                            initializer=fluid.initializer.Uniform(
-                                low=-init_bound, high=init_bound),
-                                regularizer=fluid.regularizer.L2DecayRegularizer(
-                                    regularization_coeff=1e-4)))#,
-                            #num_flatten_dims=2)
 
-        self.gru = DynamicGRU(size=grnn_hidden_dim,
+        self.gru = DynamicGRU(input_size=input_dim,
+                hidden_size=grnn_hidden_dim,
                 h_0=h_0,
-                param_attr=fluid.ParamAttr(
-                    initializer=fluid.initializer.Uniform(
+                param_attr=paddle.ParamAttr(
+                    initializer=paddle.nn.initializer.Uniform(
                         low=-init_bound, high=init_bound),
-                    regularizer=fluid.regularizer.L2DecayRegularizer(
-                        regularization_coeff=1e-4)))
+                    regularizer=paddle.fluid.regularizer.L2Decay(regularization_coeff=1e-4)))
 
-        self.pre_gru_r = Linear(input_dim=input_dim,
-                            output_dim=grnn_hidden_dim * 3,
-                            param_attr=fluid.ParamAttr(
-                                initializer=fluid.initializer.Uniform(
-                                    low=-init_bound, high=init_bound),
-                                regularizer=fluid.regularizer.L2DecayRegularizer(
-                                    regularization_coeff=1e-4)))#,
-                            #num_flatten_dims=2)
 
-        self.gru_r = DynamicGRU(size=grnn_hidden_dim,
+        self.gru_r = DynamicGRU(input_size=input_dim,
+                            hidden_size=grnn_hidden_dim,
                             is_reverse=True,
                             h_0=h_0,
-                            param_attr=fluid.ParamAttr(
-                                initializer=fluid.initializer.Uniform(
+                            param_attr=paddle.ParamAttr(
+                                initializer=paddle.nn.initializer.Uniform(
                                     low=-init_bound, high=init_bound),
-                                regularizer=fluid.regularizer.L2DecayRegularizer(
-                                    regularization_coeff=1e-4)))
+                                regularizer=paddle.fluid.regularizer.L2Decay(regularization_coeff=1e-4)))
 
 
     def forward(self, input_feature):
-        res_pre_gru = self.pre_gru(input_feature)
-        res_gru = self.gru(res_pre_gru)
-        res_pre_gru_r = self.pre_gru_r(input_feature)
-        res_gru_r = self.gru_r(res_pre_gru_r)
-        bi_merge = fluid.layers.concat(input=[res_gru, res_gru_r], axis=-1)
+        # res_pre_gru = self.pre_gru(input_feature)
+        res_gru = self.gru(input_feature)
+        # res_pre_gru_r = self.pre_gru_r(input_feature)
+        res_gru_r = self.gru_r(input_feature)
+        bi_merge = paddle.concat([res_gru, res_gru_r], axis=-1)
         return bi_merge
 
 
-class Linear_chain_crf(fluid.dygraph.Layer):
+class Linear_chain_crf(paddle.nn.Layer):
 
     def __init__(self,
                 param_attr, 
@@ -181,7 +161,7 @@ class Linear_chain_crf(fluid.dygraph.Layer):
         return log_likelihood
 
 
-class Crf_decoding(fluid.dygraph.Layer):
+class Crf_decoding(paddle.nn.Layer):
 
     def __init__(self,
                 param_attr, 
@@ -224,7 +204,7 @@ class Crf_decoding(fluid.dygraph.Layer):
         return viterbi_path
 
 
-class Chunk_eval(fluid.dygraph.Layer):
+class Chunk_eval(paddle.nn.Layer):
 
     def __init__(self,
                 num_chunk_types,
@@ -268,7 +248,7 @@ class Chunk_eval(fluid.dygraph.Layer):
             num_correct_chunks)
 
 
-class lex_net(fluid.dygraph.Layer):
+class lex_net(paddle.nn.Layer):
     def __init__(self, 
                     args, 
                     vocab_size, 
@@ -294,18 +274,20 @@ class lex_net(fluid.dygraph.Layer):
         self.init_bound = 0.1
         #self.IS_SPARSE = True
 
-        self.word_embedding = Embedding(
-            size=[self.vocab_size, self.word_emb_dim],
-            dtype='float32',
+        self.word_embedding = paddle.nn.Embedding(
+            num_embeddings = self.vocab_size,
+            embedding_dim = self.word_emb_dim, 
+            # embedding_dim=[self.vocab_size, word_emb_dim],
+            # dtype='float32',
             #is_sparse=self.IS_SPARSE,
-            param_attr=fluid.ParamAttr(
+            weight_attr=paddle.ParamAttr(
                 learning_rate=self.emb_lr,
                 name="word_emb",
-                initializer=fluid.initializer.Uniform(
+                initializer=paddle.nn.initializer.Uniform(
                     low=-self.init_bound, high=self.init_bound)))
 
         h_0 = np.zeros((args.batch_size, self.grnn_hidden_dim), dtype="float32")
-        h_0 = to_variable(h_0)
+        h_0 = paddle.to_tensor(h_0)
         self.bigru_units = []
         for i in range(self.bigru_num):
             if i == 0:
@@ -319,22 +301,20 @@ class lex_net(fluid.dygraph.Layer):
                     BiGRU(self.grnn_hidden_dim * 2, self.grnn_hidden_dim, self.init_bound, h_0=h_0)
                 ))
         
-        self.fc = Linear(input_dim=self.grnn_hidden_dim * 2,
-                        output_dim=self.num_labels,
-                        param_attr=fluid.ParamAttr(
-                            initializer=fluid.initializer.Uniform(
+        self.fc = paddle.nn.Linear(in_features=self.grnn_hidden_dim * 2,
+                        out_features=self.num_labels,
+                        weight_attr=paddle.ParamAttr(
+                            initializer=paddle.nn.initializer.Uniform(
                                 low=-self.init_bound, high=self.init_bound),
-                            regularizer=fluid.regularizer.L2DecayRegularizer(
-                                regularization_coeff=1e-4)))#,
-                        #num_flatten_dims=2)
+                            regularizer=paddle.fluid.regularizer.L2Decay(regularization_coeff=1e-4)))
         
         self.linear_chain_crf = Linear_chain_crf(
-                param_attr=fluid.ParamAttr(
+                param_attr=paddle.ParamAttr(
                     name='linear_chain_crfw', learning_rate=self.crf_lr),
                 size=self.num_labels)
 
         self.crf_decoding = Crf_decoding(
-                param_attr=fluid.ParamAttr(
+                param_attr=paddle.ParamAttr(
                     name='crfw', learning_rate=self.crf_lr),
                 size=self.num_labels)
         
@@ -342,7 +322,6 @@ class lex_net(fluid.dygraph.Layer):
         """
         Configure the network
         """
-        #word = fluid.layers.unsqueeze(word, [2])
         word_embed = self.word_embedding(word)
         input_feature = word_embed
         
@@ -357,7 +336,7 @@ class lex_net(fluid.dygraph.Layer):
                 input=emission,
                 label=target,
                 length=length)
-            avg_cost = fluid.layers.mean(x=crf_cost)
+            avg_cost = paddle.mean(x=crf_cost)
             self.crf_decoding.weight = self.linear_chain_crf.weight
             crf_decode = self.crf_decoding(
                 input=emission,
@@ -370,4 +349,104 @@ class lex_net(fluid.dygraph.Layer):
             return crf_decode
 
 
+class ChunkEvaluator():
+    """
+    Accumulate counter numbers output by chunk_eval from mini-batches and
+    compute the precision recall and F1-score using the accumulated counter
+    numbers.
+    ChunkEvaluator has three states: num_infer_chunks, num_label_chunks and num_correct_chunks, 
+    which correspond to the number of chunks, the number of labeled chunks, and the number of correctly identified chunks.
+    For some basics of chunking, please refer to 
+    `Chunking with Support Vector Machines <https://www.aclweb.org/anthology/N01-1025>`_ .
+    ChunkEvalEvaluator computes the precision, recall, and F1-score of chunk detection,
+    and supports IOB, IOE, IOBES and IO (also known as plain) tagging schemes.
+    """
+
+    def __init__(self):
+        self.num_infer_chunks = 0
+        self.num_label_chunks = 0
+        self.num_correct_chunks = 0
     
+
+    def _is_number_or_matrix_(self,var):
+        def _is_number_(var):
+            return isinstance(var, int) or isinstance(var, np.int64) or isinstance(
+                var, float) or (isinstance(var, np.ndarray) and var.shape == (1, ))
+
+        return _is_number_(var) or isinstance(var, np.ndarray)
+
+    def update(self, num_infer_chunks, num_label_chunks, num_correct_chunks):
+        """
+        This function takes (num_infer_chunks, num_label_chunks, num_correct_chunks) as input,
+        to accumulate and update the corresponding status of the ChunkEvaluator object. The update method is as follows:
+        
+        .. math:: 
+                   \\\\ \\begin{array}{l}{\\text { self. num_infer_chunks }+=\\text { num_infer_chunks }} \\\\ {\\text { self. num_Label_chunks }+=\\text { num_label_chunks }} \\\\ {\\text { self. num_correct_chunks }+=\\text { num_correct_chunks }}\\end{array} \\\\
+
+        Args:
+            num_infer_chunks(int|numpy.array): The number of chunks in Inference on the given minibatch.
+            num_label_chunks(int|numpy.array): The number of chunks in Label on the given mini-batch.
+            num_correct_chunks(int|float|numpy.array): The number of chunks both in Inference and Label on the
+                                                  given mini-batch.
+        """
+        if not self._is_number_or_matrix_(num_infer_chunks):
+            raise ValueError(
+                "The 'num_infer_chunks' must be a number(int) or a numpy ndarray."
+            )
+        if not self._is_number_or_matrix_(num_label_chunks):
+            raise ValueError(
+                "The 'num_label_chunks' must be a number(int, float) or a numpy ndarray."
+            )
+        if not self._is_number_or_matrix_(num_correct_chunks):
+            raise ValueError(
+                "The 'num_correct_chunks' must be a number(int, float) or a numpy ndarray."
+            )
+        self.num_infer_chunks += num_infer_chunks
+        self.num_label_chunks += num_label_chunks
+        self.num_correct_chunks += num_correct_chunks
+
+    def eval(self):
+        """
+        This function returns the mean precision, recall and f1 score for all accumulated minibatches.
+
+        Returns: 
+            float: mean precision, recall and f1 score.
+
+        """
+        precision = float(
+            self.num_correct_chunks
+        ) / self.num_infer_chunks if self.num_infer_chunks else 0
+        recall = float(self.num_correct_chunks
+                       ) / self.num_label_chunks if self.num_label_chunks else 0
+        f1_score = float(2 * precision * recall) / (
+            precision + recall) if self.num_correct_chunks else 0
+        return precision, recall, f1_score
+
+    def reset(self):
+        """
+        reset function empties the evaluation memory for previous mini-batches. 
+        
+        Args:
+            None
+
+        Returns:
+            None
+
+        Return types:
+            None
+
+        """
+        states = {
+            attr: value
+            for attr, value in six.iteritems(self.__dict__)
+            if not attr.startswith("_")
+        }
+        for attr, value in six.iteritems(states):
+            if isinstance(value, int):
+                setattr(self, attr, 0)
+            elif isinstance(value, float):
+                setattr(self, attr, .0)
+            elif isinstance(value, (np.ndarray, np.generic)):
+                setattr(self, attr, np.zeros_like(value))
+            else:
+                setattr(self, attr, None)
