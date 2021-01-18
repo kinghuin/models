@@ -92,3 +92,18 @@ python predict.py --data_dir ./lexical_analysis_dataset_tiny \
         --batch_size 32 \
         --use_gpu True
 ```
+
+### 2.6 导出静态图预测模型
+
+我们可以使用如下方式导出希望使用的模型：
+
+```shell
+python -u ./export_model.py \
+    --data_dir ./lexical_analysis_dataset_tiny \
+    --model_path ./save_dir/final.pdparams \
+    --output_path ./save_dir/static_model
+```
+
+其中参数释义如下：
+- `model_path` 加载的动态图微调模型。
+- `output_path` 导出的静态图预测模型保存路径。

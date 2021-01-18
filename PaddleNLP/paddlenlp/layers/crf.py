@@ -58,17 +58,14 @@ class LinearChainCrf(nn.Layer):
 
     def _initialize_alpha(self, batch_size):
         # alpha accumulate the path value to get the different next tag
-        if self._initial_alpha is None:
-            # Initialized by a small value.
-            initial_alpha = paddle.full(
-                (batch_size, self.num_tags - 1),
-                dtype='float32',
-                fill_value=-10000.)
-            # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
-            alpha_start = paddle.full(
-                (batch_size, 1), dtype='float32', fill_value=0.)
-            self._initial_alpha = paddle.concat(
-                [initial_alpha, alpha_start], axis=1)
+        # if self._initial_alpha is None:
+        # Initialized by a small value.
+        initial_alpha = paddle.full(
+            (32, self.num_tags - 1), dtype='float32', fill_value=-10000.)
+        # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
+        alpha_start = paddle.full((32, 1), dtype='float32', fill_value=0.)
+        self._initial_alpha = paddle.concat(
+            [initial_alpha, alpha_start], axis=1)
         return self._initial_alpha
 
     def forward(self, inputs, lengths):
@@ -99,7 +96,7 @@ class LinearChainCrf(nn.Layer):
 
         all_alpha = []
         if self.with_start_stop_tag:
-            alpha = self._initialize_alpha(batch_size).detach()
+            alpha = self._initialize_alpha(batch_size)  #.detach()
             for i, input_exp in enumerate(inputs_t_exp):
                 # input_exp: batch_size, num_tags, num_tags
                 # alpha_exp: batch_size, num_tags, num_tags
@@ -287,17 +284,14 @@ class ViterbiDecoder(nn.Layer):
 
     def _initialize_alpha(self, batch_size):
         # alpha accumulate the path value to get the different next tag
-        if self._initial_alpha is None:
-            # Initialized by a small value.
-            initial_alpha = paddle.full(
-                (batch_size, self.num_tags - 1),
-                dtype='float32',
-                fill_value=-10000.)
-            # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
-            alpha_start = paddle.full(
-                (batch_size, 1), dtype='float32', fill_value=0.)
-            self._initial_alpha = paddle.concat(
-                [initial_alpha, alpha_start], axis=1)
+        # if self._initial_alpha is None:
+        # Initialized by a small value.
+        initial_alpha = paddle.full(
+            (32, self.num_tags - 1), dtype='float32', fill_value=-10000.)
+        # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
+        alpha_start = paddle.full((32, 1), dtype='float32', fill_value=0.)
+        self._initial_alpha = paddle.concat(
+            [initial_alpha, alpha_start], axis=1)
         return self._initial_alpha
 
     def forward(self, inputs, lengths):
@@ -319,8 +313,8 @@ class ViterbiDecoder(nn.Layer):
         all_alpha = []
         historys = []
 
-        alpha = self._initialize_alpha(batch_size).detach(
-        ) if self.with_start_stop_tag else None
+        alpha = self._initialize_alpha(
+            batch_size)  #.detach() if self.with_start_stop_tag else None
         # inputs_t： seq_len, batch_size, n_labels
         # logit: batch_size, n_labels
         for i, logit in enumerate(inputs_t):

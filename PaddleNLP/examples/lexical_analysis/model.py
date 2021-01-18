@@ -82,6 +82,7 @@ class BiGruCrf(nn.Layer):
         self.crf = LinearChainCrf(self.num_labels, self.crf_lr)
         self.viterbi_decoder = ViterbiDecoder(self.crf.transitions)
 
+    # @paddle.jit.to_static
     def forward(self, inputs, lengths):
         word_embed = self.word_embedding(inputs)
         bigru_output, _ = self.gru(word_embed)
