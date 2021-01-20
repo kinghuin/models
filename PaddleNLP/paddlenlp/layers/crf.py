@@ -38,8 +38,8 @@ class LinearChainCrf(nn.Layer):
         super(LinearChainCrf, self).__init__()
         if with_start_stop_tag:
             self.num_tags = num_labels + 2  # Additional [START] and [STOP]
-            self.start_idx = int(self.num_tags - 1)
-            self.stop_idx = int(self.num_tags - 2)
+            self.start_idx = -1
+            self.stop_idx = -2
         else:
             self.num_tags = num_labels
 
@@ -55,18 +55,6 @@ class LinearChainCrf(nn.Layer):
         self._batch_index = None
         self._seq_index = None
         self._batch_seq_index = None
-
-    def _initialize_alpha(self, batch_size):
-        # alpha accumulate the path value to get the different next tag
-        # if self._initial_alpha is None:
-        # Initialized by a small value.
-        initial_alpha = paddle.full(
-            (32, self.num_tags - 1), dtype='float32', fill_value=-10000.)
-        # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
-        alpha_start = paddle.full((32, 1), dtype='float32', fill_value=0.)
-        self._initial_alpha = paddle.concat(
-            [initial_alpha, alpha_start], axis=1)
-        return self._initial_alpha
 
     def forward(self, inputs, lengths):
         """
@@ -95,28 +83,23 @@ class LinearChainCrf(nn.Layer):
             [batch_size, n_labels, n_labels])
 
         all_alpha = []
+
         if self.with_start_stop_tag:
-            alpha = self._initialize_alpha(batch_size)  #.detach()
-            for i, input_exp in enumerate(inputs_t_exp):
-                # input_exp: batch_size, num_tags, num_tags
-                # alpha_exp: batch_size, num_tags, num_tags
-                alpha_exp = alpha.unsqueeze(1).expand(
-                    [batch_size, n_labels, n_labels])
-                # F(n) = logsumexp(F(n-1) + p(y_n) + T(y_{n-1}, y_n))
-                mat = input_exp + trans_exp + alpha_exp
-                alpha = paddle.logsumexp(mat, 2)
-                all_alpha.append(alpha)
+            alpha = paddle.full(
+                (batch_size, self.num_tags), -10000., dtype='float32')
+            alpha[:, self.start_idx] = 0.
         else:
-            for i, input_exp in enumerate(inputs_t_exp):
-                if i == 0:
-                    alpha = inputs.transpose([1, 0, 2])[0]
-                else:
-                    alpha_exp = alpha.unsqueeze(1).expand(
-                        [batch_size, n_labels, n_labels])
-                    # F(n) = logsumexp(F(n-1) + p(y_n) + T(y_{n-1}, y_n))
-                    mat = input_exp + trans_exp + alpha_exp
-                    alpha = paddle.logsumexp(mat, 2)
-                all_alpha.append(alpha)
+            alpha = np.zeros((batch_size, self.num_tags), dtype='float32')
+
+        for i, input_exp in enumerate(inputs_t_exp):
+            # input_exp: batch_size, num_tags, num_tags
+            # alpha_exp: batch_size, num_tags, num_tags
+            alpha_exp = alpha.unsqueeze(1).expand(
+                [batch_size, n_labels, n_labels])
+            # F(n) = logsumexp(F(n-1) + p(y_n) + T(y_{n-1}, y_n))
+            mat = input_exp + trans_exp + alpha_exp
+            alpha = paddle.logsumexp(mat, 2)
+            all_alpha.append(alpha)
 
         # Get the valid alpha
         all_alpha = paddle.stack(all_alpha).transpose([1, 0, 2])
@@ -275,24 +258,14 @@ class ViterbiDecoder(nn.Layer):
         self.transitions = transitions
         self.with_start_stop_tag = with_start_stop_tag
         # If consider start and stop, -1 should be START and -2 should be STOP.
-        self.stop_idx = -2
+        if with_start_stop_tag:
+            self.start_idx = -1
+            self.stop_idx = -2
         self.num_tags = transitions.shape[0]
 
         self._initial_alpha = None
         self._index = None
         self._batch_index = None
-
-    def _initialize_alpha(self, batch_size):
-        # alpha accumulate the path value to get the different next tag
-        # if self._initial_alpha is None:
-        # Initialized by a small value.
-        initial_alpha = paddle.full(
-            (32, self.num_tags - 1), dtype='float32', fill_value=-10000.)
-        # alpha_start fill_value = 0. > -10000., means the first one step START gets the most score.
-        alpha_start = paddle.full((32, 1), dtype='float32', fill_value=0.)
-        self._initial_alpha = paddle.concat(
-            [initial_alpha, alpha_start], axis=1)
-        return self._initial_alpha
 
     def forward(self, inputs, lengths):
         """
@@ -307,32 +280,33 @@ class ViterbiDecoder(nn.Layer):
         """
         batch_size, seq_len, n_labels = inputs.shape
         inputs_t = inputs.transpose([1, 0, 2])
-        trn_exp = self.transitions.unsqueeze(0).expand(
+        trans_exp = self.transitions.unsqueeze(0).expand(
             [batch_size, n_labels, n_labels])
 
         all_alpha = []
         historys = []
 
-        alpha = self._initialize_alpha(
-            batch_size)  #.detach() if self.with_start_stop_tag else None
-        # inputs_t： seq_len, batch_size, n_labels
-        # logit: batch_size, n_labels
-        for i, logit in enumerate(inputs_t):
-            if alpha is not None:
-                alpha_exp = alpha.unsqueeze(1).expand(
-                    [batch_size, n_labels, n_labels])
-                # alpha_trn_sum: batch_size, n_labels, n_labels
-                alpha_trn_sum = alpha_exp + trn_exp
-                # alpha_max: batch_size, n_labels
-                # We don't include the emission scores here because the max does not depend on them (we add them in below)
-                alpha_max = alpha_trn_sum.max(2)
-                alpha_argmax = alpha_trn_sum.argmax(2)
-                historys.append(alpha_argmax)
-                # Now add in the emission scores
-                alpha = alpha_max + logit
-            else:
-                alpha = logit
+        if self.with_start_stop_tag:
+            alpha = paddle.full(
+                (batch_size, self.num_tags), -10000., dtype='float32')
+            alpha[:, self.start_idx] = 0.
+        else:
+            alpha = np.zeros((batch_size, self.num_tags), dtype='float32')
 
+        for i, logit in enumerate(inputs_t):
+            # input_exp: batch_size, num_tags, num_tags
+            # alpha_exp: batch_size, num_tags, num_tags
+            alpha_exp = alpha.unsqueeze(1).expand(
+                [batch_size, n_labels, n_labels])
+            # alpha_trn_sum: batch_size, n_labels, n_labels
+            alpha_trn_sum = alpha_exp + trans_exp
+            # alpha_max: batch_size, n_labels
+            # We don't include the emission scores here because the max does not depend on them (we add them in below)
+            alpha_max = alpha_trn_sum.max(2)
+            alpha_argmax = alpha_trn_sum.argmax(2)
+            historys.append(alpha_argmax)
+            # Now add in the emission scores
+            alpha = alpha_max + logit
             all_alpha.append(alpha)
 
         # Get the valid alpha
