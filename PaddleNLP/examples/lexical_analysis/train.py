@@ -113,7 +113,7 @@ def train(args):
               drop_last=True,
               shuffle=True,
               callbacks=callback)
-    model.save(os.path.join(args.model_save_dir, "infer"), training=False)
+    # model.save(os.path.join(args.model_save_dir, "infer"), training=False)
 
 
 if __name__ == "__main__":
